@@ -1,0 +1,43 @@
+###
+
+# Get all vessles
+GET http://localhost:3001/vessels HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Get all tank vessels
+GET http://localhost:3001/vessels?type=tank HTTP/1.1
+Content-Type:  application/json
+
+
+###
+
+# Get all barrel vessels
+GET http://localhost:3001/vessels?type=barrel HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Delete full vessel (should fail)
+DELETE http://localhost:3001/vessel/65aef789c9ae38364c1f7bf0 HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Delete empty vessel
+DELETE http://localhost:3001/vessel/65c24d34f996d8c17a332ed2 HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Post a new vessel
+POST http://localhost:3001/vessel HTTP/1.1
+Content-Type:  application/json
+
+{
+  "capacity": 3000,
+  "label": "New Tank",
+  "type": "tank",
+  "number": 1
+}

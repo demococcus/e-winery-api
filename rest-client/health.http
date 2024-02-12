@@ -1,0 +1,9 @@
+# Get health
+GET http://localhost:3001/health HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Get health-db
+GET http://localhost:3001/health-db HTTP/1.1
+Content-Type:  application/json

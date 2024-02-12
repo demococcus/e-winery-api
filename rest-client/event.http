@@ -1,0 +1,37 @@
+# Get last 30 events of any kind
+GET http://localhost:3001/events HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Get lab events
+GET http://localhost:3001/events?source=lab&resultsNumber=3 HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Get op events
+GET http://localhost:3001/events?source=op&resultsNumber=2 HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Get the last 100 wine events
+GET http://localhost:3001/events/wine/65adaa3bbdadcf8195baf719 HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Create event
+POST http://localhost:3001/event HTTP/1.1
+Content-Type:  application/json
+
+{
+  "category": "manipulation",
+  "date": "2024-02-09",
+  "note": "test note",
+  "targetWine": "65c2db63f871564bce699d26",
+  "type": "freeze"
+}
+
+###

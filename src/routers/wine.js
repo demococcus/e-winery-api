@@ -1,0 +1,125 @@
+const express = require('express')
+const Wine = require('../models/wine')
+const auth = require('../middleware/auth')
+const router = new express.Router()
+
+
+
+
+router.get('/wines', auth, async (req, res) => {
+  try {
+
+    // populate the tank field with the label of the tank
+    const populateVesselOptions = {path: 'vessel', select: 'label'}
+
+    // populate the event field with the lab events ordered by date
+    const populateEventOptions = {path: 'lastLab', select: 'date', options: { sort: { 'date': -1 } }}
+
+    
+    const wines = await Wine.find()
+    .find({archived: {$ne: true}})
+    .populate(populateVesselOptions)
+    .populate(populateEventOptions)
+    .lean()
+    .exec()
+
+    // iterate over all results and keep only the first date in the lastLab list
+    wines.forEach(wine => {
+      if (wine.lastLab.length > 0) {
+        wine.lastLab = wine.lastLab[0].date
+      } else {
+        wine.lastLab = null
+      }
+    })    
+    
+    res.send(wines)
+  } catch(e) {
+    res.status(500).send()
+  }
+})
+
+router.get('/wine/:id', auth, async (req, res) => {
+  const _id = req.params.id
+
+  try {
+    const wine = await Wine.findOne({ _id})
+    
+    // Populate the vessel field with the label and capacity of the vessel
+    const populateWineOptions = {path: 'vessel', select: 'label capacity'}
+    
+    await wine.populate(populateWineOptions)
+       
+
+    if (!wine) {
+      res.status(404).send()
+      return
+    }
+    
+    res.send(wine)
+  } catch(e) {
+    res.status(500).send()
+  }
+  
+})
+
+
+router.patch('/wine/:id', auth, async (req, res) => {
+
+  const updates = Object.keys(req.body)
+  const allowedUpdates = ['vintage', 'status', 'lot', 'vessel', "quantity", "archived"]
+  const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
+  
+  if (!isValidOperation) {
+      return res.status(400).send({ error: 'Invalid updates!' })
+  }
+
+  try {
+      const wine = await Wine.findOne({ _id: req.params.id})
+
+      if (!wine) {
+          return res.status(404).send()
+      }
+
+      updates.forEach((update) => wine[update] = req.body[update])
+      await wine.save()
+      res.send(wine)
+  } catch (e) {
+      res.status(400).send(e)
+      console.log(e)
+  }
+})
+
+
+router.post('/wine', auth, async (req, res) => {
+
+  const vessel  = new Wine({
+      ...req.body
+  })
+
+  try {
+      await vessel.save()
+      res.status(201).send(vessel)
+  } catch(e) {
+      res.status(400).send(e)
+      console.log(e)
+   }
+})
+
+
+// router.delete('/wine/:id', auth, async (req, res) => {
+//     try {
+//         const wine = await Wine.findByIdAndDelete(req.params.id)
+
+//         if (!wine) {
+//             res.status(404).send()
+//             return
+//         } 
+//         res.send(wine)
+//     } catch (e) {
+//         res.status(500).send()
+//     }
+
+// })
+
+
+module.exports = router

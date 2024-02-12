@@ -1,0 +1,33 @@
+body {
+    color: #333333;
+    font-family: Arial;
+    max-width: 650px;
+    margin: 0 auto;
+    padding: 0 16px;
+
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+} 
+
+.main-content {
+    flex-grow: 1;
+    
+}
+
+
+
+h1 {
+    font-size: 32px;
+    margin-bottom: 36px;
+}
+
+
+a.link-primary:link, a.link-primary:visited {
+    /* color: seagreen; */
+    text-decoration: none;
+    }
+    
+a.link-primary:hover, a.link-primary:active {
+text-decoration: underline;
+}

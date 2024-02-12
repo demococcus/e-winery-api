@@ -1,0 +1,74 @@
+# Get all wines
+GET http://localhost:3001/wines HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Get a wine in a tank
+GET http://localhost:3001/wine/65adaa3bbdadcf8195baf719 HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Get a wine in barrels
+GET http://localhost:3001/wine/65adc57bbdadcf8195baf720 HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Get a wine - invalid id
+GET http://localhost:3001/wine/baba HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Create a wine
+POST http://localhost:3001/wine HTTP/1.1
+Content-Type:  application/json
+
+{
+  "vintage": 2023,
+  "status": "FE",
+  "lot": "Test POST Wine",
+  "vessel": "65aef7fec9ae38364c1f7bf2",
+  "quantity": 111
+}
+
+###
+
+# Update a wine
+PATCH http://localhost:3001/wine/65c77b16ed9e856c2dc523f9 HTTP/1.1
+Content-Type:  application/json
+
+{
+  "vintage": 2023,
+  "status": "MA",
+  "lot": "Test PUT Wine",
+  "vessel": "65aef7fec9ae38364c1f7bf2",
+  "quantity": 222
+}
+
+###
+
+# Delete a wine
+DELETE http://localhost:3001/wine/65c665f867f2c2b07d9ccc35 HTTP/1.1
+Content-Type:  application/json
+
+
+###
+
+# Get a wine in a tank
+GET http://localhost:3001/wine/65c2db63f871564bce699d26 HTTP/1.1
+Content-Type:  application/json
+
+###
+
+# Archive a wine
+PATCH http://localhost:3001/wine/65c77b16ed9e856c2dc523f9 HTTP/1.1
+Content-Type:  application/json
+
+{
+  "archived": true
+}
+
+###
