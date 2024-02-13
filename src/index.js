@@ -33,6 +33,7 @@ app.use(userRouter)
 app.use(vesselRouter)
 app.use(wineRouter)
 app.use(eventRouter)
+app.use(eventRouter)
 
 
 

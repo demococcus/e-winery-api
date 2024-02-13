@@ -4,6 +4,19 @@ const auth = require('../middleware/auth')
 const router = new express.Router()
 const Vessel = require('../models/vessel')
 const Wine = require('../models/wine')
+const Counter = require('../models/counter')
+
+
+// Function to get the next sequence value
+async function getNextSequenceValue(sequenceName) {
+    const sequenceDocument = await Counter.findOneAndUpdate(
+      { name: sequenceName },
+      { $inc: { value: 1 } },
+      { returnOriginal: false }
+    );
+    return sequenceDocument.value;
+  }
+ 
 
 
 router.get('/events', auth, async (req, res) =>{
@@ -61,7 +74,7 @@ router.post('/event', auth, async (req, res) => {
    
     try {
         
-        const serNo = 1 // TODO: Implement a function to get the next serial number 
+        const serNo = await getNextSequenceValue('event_seq');
     
         
         // get the wine and the vessel
@@ -71,9 +84,7 @@ router.post('/event', auth, async (req, res) => {
            
     
         const wineTag = `${wine.vintage} ${wine.lot}`
-    
-        const userName = "" // TODO: Implement a function to get the user name
-        
+           
     
         const event  = new Event({
             serNo: serNo,
@@ -82,7 +93,8 @@ router.post('/event', auth, async (req, res) => {
             wineTag,
             note: data.note,
             date: data.date,
-            user: userName,
+            user: req.user.name,
+            userId: req.user._id,
             wine: data.targetWine,
         })
 
@@ -93,9 +105,7 @@ router.post('/event', auth, async (req, res) => {
         res.status(400).send(e)
         console.log(e)
      }
-  })
-
-
+})
 
 
 module.exports = router
