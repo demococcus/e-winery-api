@@ -26,7 +26,12 @@ router.post('/wineTask', auth, async (req, res) => {
 
     // find the vessel
 
-    if (data.type === 'blend-new') {     
+    if (data.type === 'blend-new') { 
+      
+      // find the vessel
+      const vessel = await Vessel.findOne({ _id: data.vessel})
+      wineTask.vessel = vessel._id
+      wineTask.vesselLabel = vessel.label
 
       // crate a new wine      
       const newWine = new Wine({
@@ -34,18 +39,14 @@ router.post('/wineTask', auth, async (req, res) => {
         lot: data.newWine.lot,
         status: 'AG',
         quantity: data.quantity,
-        vessel: data.vessel._id,
+        vessel: vessel._id,
       })
       const wine = await newWine.save()
 
       wineTask.wine = wine._id
       wineTask.wineTag = `${wine.vintage} ${wine.lot}`
 
-      // find the vessel
-      const vessel = await Vessel.findOne({ _id: data.vessel})
-      wineTask.vessel = vessel._id
-      wineTask.vesselLabel = vessel.label
-
+      
     } else {
 
       // find the wine
@@ -62,8 +63,12 @@ router.post('/wineTask', auth, async (req, res) => {
     }
 
     if (data.type === 'transfer') {
-      wineTask.nextVessel = data.nextVessel._id
-      wineTask.nextVesselLabel = data.nextVessel.label
+
+      // find the vessel
+      const vessel = await Vessel.findOne({ _id: data.vessel})
+      wineTask.nextVessel = vessel._id
+      wineTask.nextVesselLabel = vessel.label
+
     }
 
 
