@@ -6,13 +6,6 @@ const supportedTypes = ["blend-out"]
 // schema for an event that represents an operation on a wine
 const schema = new mongoose.Schema({
 
-
-  wineTask: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'wineOp'
-  },  
- 
   type: {
     type: String,
     required: true,
@@ -22,38 +15,55 @@ const schema = new mongoose.Schema({
       }
     },
   },
+  
+  // the parent task
+  wineTask: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'wineOp'
+  },  
+  
+  // from the parent task
+  number: {
+    type: Number,
+    required: true
+  },
 
-  // supplied by the frontend
+  // from the parent task
+  date: {
+    type: Date,
+    required: true
+  },
+
   wine: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'Wine'
   },
 
-  // supplied by the frontend
-  quantity: {
-    type: Number,
-    required: false
-  },
-  
-
-  // from the partent op
-  destVesselLabel: {
-    type: String,
-    required: false
+  // from the parent task
+  destWine: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'Wine'
   },
 
-  // from the partent op
+  // from the parent task
   destWineTag: {
     type: String,
-    required: false
+    required: true
   },
 
-  // supplied by the frontend
+  // from the parent task
+  destVesselLabel: {
+    type: String,
+    required: true
+  },
+
   quantity: {
     type: Number,
-    required: false
-  },
+    required: true
+  } 
   
    
 })

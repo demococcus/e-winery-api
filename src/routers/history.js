@@ -9,6 +9,8 @@ const WineSubTask = require('../models/wineSubTask')
 const Vessel = require('../models/vessel')
 
 
+
+// create wine task
 router.post('/wineTask', auth, async (req, res) => {
 
   try {
@@ -24,7 +26,6 @@ router.post('/wineTask', auth, async (req, res) => {
     wineTask.userName = req.user.name    
     wineTask.quantity = data.quantity
 
-    // find the vessel
 
     if (data.type === 'blend-new') { 
       
@@ -35,8 +36,8 @@ router.post('/wineTask', auth, async (req, res) => {
 
       // crate a new wine      
       const newWine = new Wine({
-        vintage: data.newWine.vintage,
-        lot: data.newWine.lot,
+        vintage: data.wineVintage,
+        lot: data.wineLot,
         status: 'AG',
         quantity: data.quantity,
         vessel: vessel._id,
@@ -49,7 +50,7 @@ router.post('/wineTask', auth, async (req, res) => {
       
     } else {
 
-      // find the wine
+      // find the wine and its vessel
       const wine = await Wine.findOne({ _id: data.wine})
       const populateWineOptions = {path: 'vessel', select: 'label'}
       await wine.populate(populateWineOptions)
@@ -71,21 +72,29 @@ router.post('/wineTask', auth, async (req, res) => {
 
     }
 
+    if (data.type === 'blend-in') {      
+      wineTask.nextQuantity = data.nextQuantity
+    }
+
 
     // create the subTasks
 
-    for (const subData of data.subTasks || []) {
+    for (const ingredient of data.ingredients || []) {
 
       const subTask = new WineSubTask()
 
-      subTask.wineTask = wineTask._id
       subTask.type = "blend-out"
-      subTask.wine = subData.wine._id
-      subTask.quantity = subData.quantity
-      subTask.destVesselLabel = wineTask.vesselLabel
+      subTask.wineTask = wineTask._id
+      subTask.number = wineTask.number
+      subTask.date = wineTask.date
+      subTask.wine = ingredient.wine
+      subTask.destWine = wineTask.wine
       subTask.destWineTag = wineTask.wineTag
+      subTask.destVesselLabel = wineTask.vesselLabel
+      subTask.quantity = ingredient.quantity
 
       await subTask.save()
+      console.log(subTask)
       
     }
 

@@ -101,6 +101,13 @@ const schema = new mongoose.Schema({
     type: Number,
     required: false
   },
+
+  // list of ingredients like {"wine": "abc", "quantity": 111} 
+  ingredients: {
+    type: Array,
+    required: false
+  },
+
    
 })
 
