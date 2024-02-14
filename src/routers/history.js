@@ -6,9 +6,11 @@ const Wine = require('../models/wine')
 const Counter = require('../models/counter')
 const WineTask = require('../models/wineTask')
 const WineSubTask = require('../models/wineSubTask')
+const WineLab = require('../models/wineLab')
 const Vessel = require('../models/vessel')
 
 
+// get wine tasks
 router.get('/wineTasks', auth, async (req, res) =>{
 
     
@@ -151,6 +153,85 @@ router.post('/wineTask', auth, async (req, res) => {
 
 
 })
+
+// create wine lab
+router.post('/wineLab', auth, async (req, res) => {
+
+  try {
+    const data = req.body
+
+    // find the wine and its vessel
+    const wine = await Wine.findOne({ _id: data.wine})
+    const populateWineOptions = {path: 'vessel', select: 'label'}
+    await wine.populate(populateWineOptions)
+
+    const wineLab  = new WineLab({
+      type: 'lab',
+      date: data.date || new Date(),
+      note: data.note,
+      user: req.user._id,
+      userName: req.user.name,
+      vesselLabel: wine.vessel.label,
+      wine: wine._id,
+      wineTag: `${wine.vintage} ${wine.lot}`,
+      alcohol: data.alcohol,
+      sugars: data.sugars,
+      tAcids: data.tAcids,
+      pH: data.pH,
+      SO2: data.SO2,
+      tSO2: data.tSO2,
+      vAcidity: data.vAcidity,
+      density: data.density,
+      mAcid: data.mAcid,    
+
+    })
+
+
+
+    // save it
+    await wineLab.save()
+
+    //send it back
+    res.status(201).send(wineLab)
+
+  } catch(e) {
+    res.status(400).send(e)
+    console.log(e)
+  }
+
+  return 
+
+
+
+})
+
+// get wine labs
+router.get('/wineLabs', auth, async (req, res) =>{
+
+    
+  // if req.query.resultsNumber is 90 or less, use it, otherwise use 30
+  const resultsNumber = req.query.results <= 90 ? req.query.results : 30;
+
+
+  try {       
+    const events = await WineLab
+    .find()
+    .sort({ date: -1 }) // Sort by "date" in descending order
+    .limit(resultsNumber) // Limit the results
+    .lean()
+    .exec();
+        
+    res.send(events)
+  } catch(e) {    
+    res.status(500).send()
+    console.log(e)
+
+
+  } 
+})
+
+
+
 
 
 module.exports = router

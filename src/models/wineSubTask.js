@@ -23,13 +23,11 @@ const schema = new mongoose.Schema({
     ref: 'wineOp'
   },  
   
-  // from the parent task
   number: {
     type: Number,
     required: true
   },
 
-  // from the parent task
   date: {
     type: Date,
     required: true
@@ -51,20 +49,17 @@ const schema = new mongoose.Schema({
     required: true
   },
 
-  // from the parent task
   destWine: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'Wine'
   },
 
-  // from the parent task
   destWineTag: {
     type: String,
     required: true
   },
 
-  // from the parent task
   destVesselLabel: {
     type: String,
     required: true
