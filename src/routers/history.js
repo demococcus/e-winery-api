@@ -9,6 +9,31 @@ const WineSubTask = require('../models/wineSubTask')
 const Vessel = require('../models/vessel')
 
 
+router.get('/wineTasks', auth, async (req, res) =>{
+
+    
+  // if req.query.resultsNumber is 90 or less, use it, otherwise use 30
+  const resultsNumber = req.query.results <= 90 ? req.query.results : 30;
+
+
+  try {       
+    const events = await WineTask
+    .find()
+    .sort({ date: -1 }) // Sort by "date" in descending order
+    .limit(resultsNumber) // Limit the results
+    .populate({path: 'subTasks'})
+    .lean()
+    .exec();
+        
+    res.send(events)
+  } catch(e) {    
+    res.status(500).send()
+    console.log(e)
+
+
+  } 
+})
+
 
 // create wine task
 router.post('/wineTask', auth, async (req, res) => {
@@ -70,6 +95,9 @@ router.post('/wineTask', auth, async (req, res) => {
       wineTask.nextVessel = nextVessel._id
       wineTask.nextVesselLabel = nextVessel.label
 
+      // change the vessel of the wine
+
+
     }
 
     if (data.type === 'blend-in') {      
@@ -83,18 +111,26 @@ router.post('/wineTask', auth, async (req, res) => {
 
       const subTask = new WineSubTask()
 
+      // find the wine and its vessel
+      const wine = await Wine.findOne({ _id: ingredient.wine})
+      const populateWineOptions = {path: 'vessel', select: 'label'}
+      await wine.populate(populateWineOptions)
+
+
       subTask.type = "blend-out"
       subTask.wineTask = wineTask._id
       subTask.number = wineTask.number
       subTask.date = wineTask.date
       subTask.wine = ingredient.wine
+      subTask.wineTag = `${wine.vintage} ${wine.lot}`
+      subTask.vesselLabel = wine.vessel.label
       subTask.destWine = wineTask.wine
       subTask.destWineTag = wineTask.wineTag
       subTask.destVesselLabel = wineTask.vesselLabel
       subTask.quantity = ingredient.quantity
 
       await subTask.save()
-      // console.log(subTask)
+
       
     }
 

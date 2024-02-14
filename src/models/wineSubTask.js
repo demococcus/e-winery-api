@@ -41,6 +41,16 @@ const schema = new mongoose.Schema({
     ref: 'Wine'
   },
 
+  wineTag: {
+    type: String,
+    required: true
+  },
+
+  vesselLabel: {
+    type: String,
+    required: true
+  },
+
   // from the parent task
   destWine: {
     type: mongoose.Schema.Types.ObjectId,
