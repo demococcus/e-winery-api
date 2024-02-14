@@ -20,7 +20,7 @@ const wineSchema = new mongoose.Schema({
         required: true,
         minlength: 3,        
         trim: true,
-        // unique: true, // should it be unique?
+        // unique: true, // should not be unique
     },
 
     status: {

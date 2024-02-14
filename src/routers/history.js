@@ -66,9 +66,9 @@ router.post('/wineTask', auth, async (req, res) => {
     if (data.type === 'transfer') {
 
       // find the vessel
-      const vessel = await Vessel.findOne({ _id: data.vessel})
-      wineTask.nextVessel = vessel._id
-      wineTask.nextVesselLabel = vessel.label
+      const nextVessel = await Vessel.findOne({ _id: data.nextVessel})
+      wineTask.nextVessel = nextVessel._id
+      wineTask.nextVesselLabel = nextVessel.label
 
     }
 
@@ -94,7 +94,7 @@ router.post('/wineTask', auth, async (req, res) => {
       subTask.quantity = ingredient.quantity
 
       await subTask.save()
-      console.log(subTask)
+      // console.log(subTask)
       
     }
 
