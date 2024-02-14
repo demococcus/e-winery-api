@@ -7,18 +7,7 @@ const Wine = require('../models/wine')
 const Counter = require('../models/counter')
 
 
-// Function to get the next sequence value
-async function getNextSequenceValue(sequenceName) {
-    const sequenceDocument = await Counter.findOneAndUpdate(
-      { name: sequenceName },
-      { $inc: { value: 1 } },
-      { returnOriginal: false }
-    );
-    return sequenceDocument.value;
-  }
- 
-
-
+  
 router.get('/events', auth, async (req, res) =>{
 
     
@@ -74,8 +63,8 @@ router.post('/event', auth, async (req, res) => {
    
     try {
         
-        const serNo = await getNextSequenceValue('event_seq');
-    
+        const serNo = await Counter.getNextValue('event_seq')
+  
         
         // get the wine and the vessel
         const wine = await Wine.findOne({ _id: data.targetWine })

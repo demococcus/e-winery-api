@@ -13,6 +13,20 @@ const counterSchema = new mongoose.Schema({
     
 })
 
+// creating a model method that gets the next sequence value
+counterSchema.statics.getNextValue = async(sequenceName) => {
+
+
+    const sequenceDocument = await Counter.findOneAndUpdate(
+        { name: sequenceName },
+        { $inc: { value: 1 } },
+        { returnOriginal: false }
+      );
+    return sequenceDocument.value;
+ 
+}
+
+
 
 const Counter = mongoose.model('counter', counterSchema)
 

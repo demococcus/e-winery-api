@@ -7,6 +7,7 @@ const userRouter = require('./routers/user')
 const vesselRouter = require('./routers/vessel')
 const wineRouter = require('./routers/wine')
 const eventRouter = require('./routers/event')
+const historyRouter = require('./routers/history')
 
 const app = express()
 const port = process.env.PORT || 3001
@@ -34,6 +35,7 @@ app.use(vesselRouter)
 app.use(wineRouter)
 app.use(eventRouter)
 app.use(eventRouter)
+app.use(historyRouter)
 
 
 
