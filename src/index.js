@@ -3,11 +3,11 @@ const cors = require('cors');
 require('./db/mongoose')
 
 const healthRouter = require('./routers/health')
+const historyRouter = require('./routers/history')
 const userRouter = require('./routers/user')
 const vesselRouter = require('./routers/vessel')
 const wineRouter = require('./routers/wine')
-const eventRouter = require('./routers/event')
-const historyRouter = require('./routers/history')
+
 
 const app = express()
 const port = process.env.PORT || 3001
@@ -26,16 +26,12 @@ app.use(express.json())
 
 app.use(express.static('public'));
 
-app.get('', (req, res) => {
-    res.sendFile('index.html', { root: 'public' });
-});
+app.get('', (req, res) => { res.sendFile('index.html', { root: 'public' });});
 app.use(healthRouter)
+app.use(historyRouter)
 app.use(userRouter)
 app.use(vesselRouter)
 app.use(wineRouter)
-app.use(eventRouter)
-app.use(eventRouter)
-app.use(historyRouter)
 
 
 
