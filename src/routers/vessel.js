@@ -14,7 +14,6 @@ router.get('/vessels', auth, async (req, res) => {
         searchCriteria.type = req.query.type
     }
 
-
    // Search the database for vessels
     try {
         const vessels = await Vessel
@@ -59,14 +58,28 @@ router.get('/vessels', auth, async (req, res) => {
                     vessel.status = 'need-top-up'
                 }
 
+                
+
 
             }
 
  
         })
+
+        let filteredVessels = vessels
+
+        if (req.query.status === "available") {
+            console.log('filtering vessels')
+            // filter teh vessels to keep only the ones with status 'available' and 'empty'
+            // vessels = vessels.filter(vessel => vessel.status === 'available' || vessel.status === 'empty')
+            filteredVessels = vessels.filter(vessel => vessel.status === 'available' || vessel.status === 'empty')
+            console.log(filteredVessels)
+
+
+        }
      
     
-        res.send(vessels)
+        res.send(filteredVessels)
     } catch(e) {    
         res.status(500).send()
     } 
