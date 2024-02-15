@@ -19,15 +19,15 @@ router.get('/wineTasks', auth, async (req, res) =>{
 
 
   try {       
-    const events = await WineTask
+    const results = await WineTask
     .find()
     .sort({ date: -1 }) // Sort by "date" in descending order
     .limit(resultsNumber) // Limit the results
     .populate({path: 'subTasks'})
     .lean()
-    .exec();
+    .exec()
         
-    res.send(events)
+    res.send(results)
   } catch(e) {    
     res.status(500).send()
     console.log(e)
@@ -166,23 +166,15 @@ router.post('/wineLab', auth, async (req, res) => {
     await wine.populate(populateWineOptions)
 
     const wineLab  = new WineLab({
+      ...data,
+
       type: 'lab',
       date: data.date || new Date(),
-      note: data.note,
       user: req.user._id,
       userName: req.user.name,
       vesselLabel: wine.vessel.label,
       wine: wine._id,
-      wineTag: `${wine.vintage} ${wine.lot}`,
-      alcohol: data.alcohol,
-      sugars: data.sugars,
-      tAcids: data.tAcids,
-      pH: data.pH,
-      SO2: data.SO2,
-      tSO2: data.tSO2,
-      vAcidity: data.vAcidity,
-      density: data.density,
-      mAcid: data.mAcid,    
+      wineTag: `${wine.vintage} ${wine.lot}`,  
 
     })
 
@@ -208,20 +200,22 @@ router.post('/wineLab', auth, async (req, res) => {
 // get wine labs
 router.get('/wineLabs', auth, async (req, res) =>{
 
+  console.log("cp1")
+
     
   // if req.query.resultsNumber is 90 or less, use it, otherwise use 30
   const resultsNumber = req.query.results <= 90 ? req.query.results : 30;
 
 
   try {       
-    const events = await WineLab
+    const results = await WineLab
     .find()
     .sort({ date: -1 }) // Sort by "date" in descending order
     .limit(resultsNumber) // Limit the results
     .lean()
-    .exec();
+    .exec()
         
-    res.send(events)
+    res.send(results)
   } catch(e) {    
     res.status(500).send()
     console.log(e)

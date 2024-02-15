@@ -62,7 +62,7 @@ const schema = new mongoose.Schema({
   pH: {type: Number, required: false},
   SO2: {type: Number, required: false},
   tSO2: {type: Number, required: false},
-  vAcidity: {type: Number, required: false},
+  vAcids: {type: Number, required: false},
   density: {type: Number, required: false},
   mAcid: {type: Number, required: false},
    
