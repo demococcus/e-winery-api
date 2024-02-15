@@ -61,7 +61,7 @@ wineSchema.virtual('events', {
 })
 // Wine - Event
 wineSchema.virtual('lastLab', {
-    ref: 'Event',
+    ref: 'WineLab',
     localField: '_id',
     foreignField: 'wine'
 })
