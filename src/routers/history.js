@@ -36,7 +36,6 @@ router.get('/wineTasks', auth, async (req, res) =>{
   } 
 })
 
-
 // create wine task
 router.post('/wineTask', auth, async (req, res) => {
 
@@ -130,9 +129,9 @@ router.post('/wineTask', auth, async (req, res) => {
       subTask.destWineTag = wineTask.wineTag
       subTask.destVesselLabel = wineTask.vesselLabel
       subTask.quantity = ingredient.quantity
+      subTask.userName = wineTask.userName
 
       await subTask.save()
-
       
     }
 
@@ -200,8 +199,6 @@ router.post('/wineLab', auth, async (req, res) => {
 // get wine labs
 router.get('/wineLabs', auth, async (req, res) =>{
 
-  console.log("cp1")
-
     
   // if req.query.resultsNumber is 90 or less, use it, otherwise use 30
   const resultsNumber = req.query.results <= 90 ? req.query.results : 30;
@@ -224,6 +221,51 @@ router.get('/wineLabs', auth, async (req, res) =>{
   } 
 })
 
+// get teh labs and the tasks of a given wine
+
+router.get('/history/wine/:id', auth, async (req, res) =>{
+
+  const wineId = req.params.id
+
+
+  try {   
+    
+     // get the labs
+     const labResults = await WineLab
+     .find({wine: wineId})
+     .sort({ date: -1 }) // Sort by "date" in descending order
+     .limit(100) // Limit the results to 100
+     .lean()
+     .exec()
+    
+
+    // get the tasks
+    const taskResults = await WineTask
+    .find({wine: wineId})
+    .sort({ date: -1 }) // Sort by "date" in descending order
+    .limit(100) // Limit the results to 100
+    .populate({path: 'subTasks'})
+    .lean()
+    .exec()
+
+   
+
+    // get the subTasks
+    const subTaskResults = await WineSubTask
+    .find({wine: wineId})
+    .sort({ date: -1 }) // Sort by "date" in descending order
+    .limit(100) // Limit the results to 100
+    .lean()
+    .exec()
+
+
+        
+    res.send([...labResults, ...taskResults, ...subTaskResults])
+  } catch(e) {    
+    res.status(500).send()
+    console.log(e)
+  } 
+})
 
 
 

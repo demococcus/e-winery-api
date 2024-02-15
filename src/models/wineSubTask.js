@@ -68,6 +68,11 @@ const schema = new mongoose.Schema({
   quantity: {
     type: Number,
     required: true
+  },
+  
+  userName: {
+    type: String,
+    required: true
   } 
   
    
