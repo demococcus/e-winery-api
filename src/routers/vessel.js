@@ -69,13 +69,9 @@ router.get('/vessels', auth, async (req, res) => {
         let filteredVessels = vessels
 
         if (req.query.status === "available") {
-            console.log('filtering vessels')
             // filter teh vessels to keep only the ones with status 'available' and 'empty'
             // vessels = vessels.filter(vessel => vessel.status === 'available' || vessel.status === 'empty')
             filteredVessels = vessels.filter(vessel => vessel.status === 'available' || vessel.status === 'empty')
-            console.log(filteredVessels)
-
-
         }
      
     

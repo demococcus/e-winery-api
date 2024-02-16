@@ -69,6 +69,11 @@ const schema = new mongoose.Schema({
     type: Number,
     required: true
   },
+
+  quantityAfter: {
+    type: Number,
+    required: false
+  },
   
   userName: {
     type: String,

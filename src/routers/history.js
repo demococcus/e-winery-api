@@ -150,17 +150,27 @@ router.post('/wineTask', auth, async (req, res) => {
         subTask.date = wineTask.date
         subTask.wine = ingredient.wine
         subTask.wineTag = `${wine.vintage} ${wine.lot}`
+        subTaskVessel = wine.vessel._id
         subTask.vesselLabel = wine.vessel.label
         subTask.destWine = wineTask.wine
         subTask.destWineTag = wineTask.wineTag
         subTask.destVesselLabel = wineTask.vesselLabel
         subTask.quantity = ingredient.quantity
+        subTask.quantityAfter = wine.quantity - ingredient.quantity
         subTask.userName = wineTask.userName
-  
+ 
         await subTask.save()
   
         // modify the quantity of the source wine
-        wine.quantity -= ingredient.quantity
+        wine.quantity = subTask.quantityAfter
+
+        // archive the wine if it has no quantity left
+        if (wine.quantity <= 0) {
+          wine.archived = true
+          wine.tank = null
+        };
+
+
         await wine.save()      
       }
 
