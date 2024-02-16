@@ -2,8 +2,8 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 
 const supportedTypes = [
-  "transfer", "blend-new", "blend-in",
-  "aerate", "decant", "filter", "freeze",  "remontage", "note"
+  "aerate", "decant", "filter", "freeze",  "remontage",
+  "transfer", "transfer-partial", "blend",
 ]
 
 // schema for an event that represents an operation on a wine

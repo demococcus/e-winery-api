@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 
-const supportedTypes = ["blend-out"]
+const supportedTypes = ["transfer-out"]
 
 // schema for an event that represents an operation on a wine
 const schema = new mongoose.Schema({
