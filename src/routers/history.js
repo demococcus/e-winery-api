@@ -73,18 +73,44 @@ router.post('/wineTask', auth, async (req, res) => {
       wineTask.nextVessel = nextVessel._id
       wineTask.nextVesselLabel = nextVessel.label
 
-      // crate a new wine wit hhe same properties as the existing one    
+      // crate a new wine with the same properties as the existing one    
       const nextWine = new Wine({
         vintage: wine.vintage,
         lot: wine.lot,
         status: wine.status,
         quantity: data.nextQuantity,
-        vessel: wine.vessel._id,
+        vessel: nextVessel._id,
       })
       await nextWine.save()
 
-      // wineTask.wine = wine._id
-      // wineTask.wineTag = `${wine.vintage} ${wine.lot}`
+      // save the modifications in the current wine
+      wine.quantity -= data.nextQuantity
+      await wine.save()
+
+
+      // create a subtask for the original wine
+      const subTask = new WineSubTask({
+        type: "transfer-out",
+        wineTask: wineTask._id,
+        number: wineTask.number,
+        date: wineTask.date,
+        wine: wine._id,
+        wineTag: `${wine.vintage} ${wine.lot}`,
+        vesselLabel: wine.vessel.label,
+        destWine: nextWine._id,
+        destWineTag: `${wine.vintage} ${wine.lot}`,
+        destVesselLabel: nextVessel.label,
+        quantity: data.nextQuantity,
+        userName: wineTask.userName,
+      })
+
+      await subTask.save()
+      
+
+      // now modify the task so that it reflects the actions on the new wine
+      wineTask.wine = nextWine._id
+      wineTask.wineTag = `${wine.vintage} ${wine.lot}`
+
 
       
     } else if (data.type === 'transfer') {
@@ -106,43 +132,42 @@ router.post('/wineTask', auth, async (req, res) => {
       wine.quantity = data.nextQuantity
       await wine.save()
 
+      // create the subTasks
+  
+      for (const ingredient of data.ingredients || []) {
+  
+        const subTask = new WineSubTask()
+  
+        // find the wine and its vessel
+        const wine = await Wine.findOne({ _id: ingredient.wine})
+        const populateWineOptions = {path: 'vessel', select: 'label'}
+        await wine.populate(populateWineOptions)
+  
+  
+        subTask.type = "transfer-out"
+        subTask.wineTask = wineTask._id
+        subTask.number = wineTask.number
+        subTask.date = wineTask.date
+        subTask.wine = ingredient.wine
+        subTask.wineTag = `${wine.vintage} ${wine.lot}`
+        subTask.vesselLabel = wine.vessel.label
+        subTask.destWine = wineTask.wine
+        subTask.destWineTag = wineTask.wineTag
+        subTask.destVesselLabel = wineTask.vesselLabel
+        subTask.quantity = ingredient.quantity
+        subTask.userName = wineTask.userName
+  
+        await subTask.save()
+  
+        // modify the quantity of the source wine
+        wine.quantity -= ingredient.quantity
+        await wine.save()      
+      }
+
+
     }
 
 
-    // create the subTasks
-
-    for (const ingredient of data.ingredients || []) {
-
-      const subTask = new WineSubTask()
-
-      // find the wine and its vessel
-      const wine = await Wine.findOne({ _id: ingredient.wine})
-      const populateWineOptions = {path: 'vessel', select: 'label'}
-      await wine.populate(populateWineOptions)
-
-
-      subTask.type = "transfer-out"
-      subTask.wineTask = wineTask._id
-      subTask.number = wineTask.number
-      subTask.date = wineTask.date
-      subTask.wine = ingredient.wine
-      subTask.wineTag = `${wine.vintage} ${wine.lot}`
-      subTask.vesselLabel = wine.vessel.label
-      subTask.destWine = wineTask.wine
-      subTask.destWineTag = wineTask.wineTag
-      subTask.destVesselLabel = wineTask.vesselLabel
-      subTask.quantity = ingredient.quantity
-      subTask.userName = wineTask.userName
-
-      await subTask.save()
-
-      // modify the quantity of the source wine
-      wine.quantity -= ingredient.quantity
-      await wine.save()
-
-
-      
-    }
 
 
     // save it
