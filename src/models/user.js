@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema({
     company: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'Company'
+        ref: 'Companie'
       },
 
     tokens: [{
@@ -119,12 +119,12 @@ userSchema.pre('save', async function (next) {
 
 
 
-// Delete user tasks when user is removed
-userSchema.pre('remove', async function (next) {
-    const user = this
-    await Task.deleteMany({ owner: user._id })    
-    next()
-})
+// // Delete user tasks when user is removed
+// userSchema.pre('remove', async function (next) {
+//     const user = this
+//     await Task.deleteMany({ owner: user._id })    
+//     next()
+// })
 
 const User = mongoose.model('User', userSchema)
 

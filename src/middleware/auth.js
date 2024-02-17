@@ -17,7 +17,9 @@ const auth = async (req, res, next) => {
         // find a user that has this token
         const user = await User.findOne({_id: decoded._id, 'tokens.token': token})
         if (!user) { throw new Error() }
-        
+
+        await user.populate({path: 'company', select: 'name'})
+       
         // attach the user and teh token to the request so that the routes can have access to it
         req.user = user
         req.token = token
