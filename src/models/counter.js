@@ -2,6 +2,13 @@ const mongoose = require('mongoose')
 
 const counterSchema = new mongoose.Schema({
 
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'Companie'
+      },
+
+
     name: {
         type: String,
         required: false
@@ -14,11 +21,11 @@ const counterSchema = new mongoose.Schema({
 })
 
 // creating a model method that gets the next sequence value
-counterSchema.statics.getNextValue = async(sequenceName) => {
+counterSchema.statics.getNextValue = async(sequenceName, company) => {
 
 
     const sequenceDocument = await Counter.findOneAndUpdate(
-        { name: sequenceName },
+        { name: sequenceName, company },
         { $inc: { value: 1 } },
         { returnOriginal: false }
       );
