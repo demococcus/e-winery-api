@@ -45,7 +45,7 @@ router.post('/wineTask', auth, async (req, res) => {
     const wineTask  = new WineTask({})
 
     wineTask.type = data.type
-    wineTask.number = await Counter.getNextValue('event_seq')
+    wineTask.number = await Counter.getNextValue('wineTaskSeq')
     wineTask.date = data.date || new Date()
     wineTask.note = data.note
     wineTask.user = req.user._id

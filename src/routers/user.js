@@ -2,6 +2,7 @@ const express = require('express')
 const User = require('../models/user')
 const router = new express.Router()
 const auth = require('../middleware/auth')
+const UserInvitation = require('../models/invitation')
 
 
 router.post('/users/login', async (req, res) => {
@@ -48,13 +49,30 @@ router.get('/users/logoutAll', auth, async (req, res) => {
 })
 
 router.post('/users', async (req, res) => {
-    const user = new User(req.body)
 
-    // Disable creation of new users except the ones from the list
-    if (!["georgi.gatin@gmail.com"].includes(user.email)) {
-        res.status(401).send({error: 'Please contact the administrator to create a new user.'})
+    // verify if the user already exists
+    existingUser = await User.findOne({email: req.body.email})
+    if (existingUser) { 
+        res.status(400).send({error: 'User already exists.'})
         return
     }
+
+
+    
+    // verify if the user is invited
+    const invitation = await UserInvitation.findOne({email: req.body.email})
+    
+    if (!invitation) {
+        res.status(401).send({error: 'You are not invited.'})
+        return
+    }
+    
+    const user = new User(req.body)
+
+    // copy the properties from the invitation
+    user.name = invitation.name
+    user.role = invitation.role
+    user.company = invitation.company
 
 
     try {

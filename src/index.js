@@ -7,6 +7,8 @@ const historyRouter = require('./routers/history')
 const userRouter = require('./routers/user')
 const vesselRouter = require('./routers/vessel')
 const wineRouter = require('./routers/wine')
+const companyRouter = require('./routers/company')
+const invitationRouter = require('./routers/invitation')
 
 
 const app = express()
@@ -32,6 +34,9 @@ app.use(historyRouter)
 app.use(userRouter)
 app.use(vesselRouter)
 app.use(wineRouter)
+app.use(wineRouter)
+app.use(companyRouter)
+app.use(invitationRouter)
 
 
 

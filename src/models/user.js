@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
         minlength: 3,
         trim: true
     },
+
     email: {
         type: String,
         required: true,
@@ -26,6 +27,7 @@ const userSchema = new mongoose.Schema({
             }
         }
     },
+
     password: {
         type: String,
         required: true,
@@ -37,15 +39,22 @@ const userSchema = new mongoose.Schema({
             }
         }
     },
+
     role: {
         type: String,
         required: true,
         validate(value) {
-            if (!["demo", "lab", "winemaker", "cellar-hand"].includes(value)) {
+            if (!["admin", "demo", "lab", "winemaker", "cellar-hand"].includes(value)) {
                 throw new Error('The roles are lab, winemaker, and cellar-hand. Please choose one of these roles.')
             }
         },
     },
+
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'Company'
+      },
 
     tokens: [{
         token: {
