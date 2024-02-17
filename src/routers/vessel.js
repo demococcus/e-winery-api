@@ -9,7 +9,8 @@ const router = new express.Router()
 router.get('/vessels', auth, async (req, res) => {
 
     // Read the query parameter 'type' and create a search criteria
-    const searchCriteria = {}   
+    const company = req.user.company._id
+    const searchCriteria = {company}   
     if (["barrel", "tank"].includes(req.query.type)) {
         searchCriteria.type = req.query.type
     }
@@ -56,13 +57,9 @@ router.get('/vessels', auth, async (req, res) => {
                     vessel.status = 'available'
                 } else {
                     vessel.status = 'need-top-up'
-                }
-
-                
-
+                }              
 
             }
-
  
         })
 
@@ -85,9 +82,11 @@ router.get('/vessels', auth, async (req, res) => {
 // Get a vessel by id
 router.get('/vessel/:id', auth, async (req, res) => {
     const _id = req.params.id  
+    const company = req.user.company._id
+    const searchCriteria = {company, _id}
     try {
       const vessel = await Vessel
-      .findOne({ _id})
+      .findOne(searchCriteria)
       .populate('wines', 'vintage name')
       .lean()
       .exec();
@@ -107,6 +106,7 @@ router.get('/vessel/:id', auth, async (req, res) => {
 router.post('/vessel', auth, async (req, res) => {
 
     const vessel  = new Vessel(req.body)
+    vessel.company = req.user.company._id
   
     try {
         await vessel.save()
@@ -120,8 +120,11 @@ router.post('/vessel', auth, async (req, res) => {
 // Delete a vessel by id
 router.delete('/vessel/:id', auth, async (req, res) => {
     const _id = req.params.id
+    const company = req.user.company._id
+    const searchCriteria = {company, _id}
+
     try {
-        const vessel = await Vessel.findOne({ _id })
+        const vessel = await Vessel.findOne(searchCriteria)
 
         // Find wines that are linked to the vessel
         const wines = await Wine.find({ vessel: _id })

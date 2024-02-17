@@ -9,6 +9,9 @@ const router = new express.Router()
 router.get('/wines', auth, async (req, res) => {
   try {
 
+    const company = req.user.company._id
+    const searchCriteria = {company, archived: {$ne: true}} 
+
     // populate the tank field with the label of the tank
     const populateVesselOptions = {path: 'vessel', select: 'label'}
 
@@ -17,7 +20,7 @@ router.get('/wines', auth, async (req, res) => {
 
     
     const wines = await Wine.find()
-    .find({archived: {$ne: true}})
+    .find(searchCriteria)
     .populate(populateVesselOptions)
     .populate(populateEventOptions)
     .lean()
@@ -40,20 +43,21 @@ router.get('/wines', auth, async (req, res) => {
 
 router.get('/wine/:id', auth, async (req, res) => {
   const _id = req.params.id
+  const company = req.user.company._id
+  const searchCriteria = {company, _id}
 
   try {
-    const wine = await Wine.findOne({ _id})
+    const wine = await Wine.findOne(searchCriteria)
     
     // Populate the vessel field with the label and capacity of the vessel
     const populateWineOptions = {path: 'vessel', select: 'label capacity'}
     
-    await wine.populate(populateWineOptions)
-       
-
     if (!wine) {
       res.status(404).send()
       return
     }
+
+    await wine.populate(populateWineOptions)
     
     res.send(wine)
   } catch(e) {
@@ -62,7 +66,6 @@ router.get('/wine/:id', auth, async (req, res) => {
   
 })
 
-
 router.patch('/wine/:id', auth, async (req, res) => {
 
   const updates = Object.keys(req.body)
@@ -70,30 +73,33 @@ router.patch('/wine/:id', auth, async (req, res) => {
   const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
   
   if (!isValidOperation) {
-      return res.status(400).send({ error: 'Invalid updates!' })
+    return res.status(400).send({ error: 'Invalid updates!' })
   }
 
   try {
-      const wine = await Wine.findOne({ _id: req.params.id})
+    const _id = req.params.id
+    const company = req.user.company._id
+    const searchCriteria = {company, _id}
+    const wine = await Wine.findOne(searchCriteria)
 
-      if (!wine) {
-          return res.status(404).send()
-      }
+    if (!wine) {
+      return res.status(404).send()
+    }
 
-      updates.forEach((update) => wine[update] = req.body[update])
-      await wine.save()
-      res.send(wine)
+    updates.forEach((update) => wine[update] = req.body[update])
+    await wine.save()
+    res.send(wine)
   } catch (e) {
-      res.status(400).send(e)
-      console.log(e)
+    res.status(400).send(e)
+    console.log(e)
   }
 })
-
 
 router.post('/wine', auth, async (req, res) => {
 
   const vessel  = new Wine({
-      ...req.body
+      ...req.body,
+      company: req.user.company._id
   })
 
   try {

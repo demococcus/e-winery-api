@@ -3,6 +3,12 @@ const validator = require('validator')
 
 const vesselSchema = new mongoose.Schema({
 
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'Companie'
+      },
+
     label: {
         type: String,
         required: true,
@@ -54,7 +60,7 @@ const vesselSchema = new mongoose.Schema({
 
     number: {
         type: Number,
-        required: true,
+        required: false,
         default: 1,
         validate: {
             validator: function(value) {

@@ -6,6 +6,12 @@ const supportedTypes = ["transfer-out"]
 // schema for an event that represents an operation on a wine
 const schema = new mongoose.Schema({
 
+  company: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'Companie'
+  },
+
   type: {
     type: String,
     required: true,

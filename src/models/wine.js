@@ -4,6 +4,12 @@ const validator = require('validator')
 
 const wineSchema = new mongoose.Schema({
 
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'Companie'
+      },
+
     vintage: {
         type: Number,
         required: true,  
