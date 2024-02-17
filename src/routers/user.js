@@ -56,8 +56,6 @@ router.post('/users', async (req, res) => {
         res.status(400).send({error: 'User already exists.'})
         return
     }
-
-
     
     // verify if the user is invited
     const invitation = await UserInvitation.findOne({email: req.body.email})
