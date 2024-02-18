@@ -38,7 +38,7 @@ const additiveSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator: function(value) {
-        return ["u-kg", "u-g", "u-mg", "u-ppm", "u-l", "u-ml", "u-gal", "u-lb"].includes(value);
+        return ["u-kg", "u-g", "u-mg", "u-ppm", "u-l", "u-ml", "u-gal", "u-lb", "u-oz"].includes(value);
       },
       message: 'Invalid unit.'
     }
