@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 
-const supportedTypes = ["transfer-out"]
+const supportedTypes = ["transfer-out", "additive"]
 
 // schema for an event that represents an operation on a wine
 const schema = new mongoose.Schema({
@@ -41,18 +41,34 @@ const schema = new mongoose.Schema({
 
   wine: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
+    required: false,
     ref: 'Wine'
+  },
+
+  additive: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'Additive'
   },
 
   wineTag: {
     type: String,
-    required: true
+    required: false
   },
+
+  additiveLabel: {
+    type: String,
+    required: true
+  },  
+
+  additiveUnit: {
+    type: String,
+    required: true
+  }, 
 
   vesselLabel: {
     type: String,
-    required: true
+    required: false
   },
 
   destWine: {

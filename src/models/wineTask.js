@@ -3,7 +3,7 @@ const validator = require('validator')
 
 const supportedTypes = [
   "aerate", "decant", "filter", "freeze",  "remontage",
-  "transfer", "transfer-partial", "blend",
+  "transfer", "transfer-partial", "blend", "additive"
 ]
 
 // schema for an event that represents an operation on a wine
@@ -95,10 +95,15 @@ const schema = new mongoose.Schema({
     required: false
   },
 
-  ingredients: {
-    type: Array,
-    required: false
-  },
+  // ingredients: {
+  //   type: Array,
+  //   required: false
+  // },
+
+  // additives: {
+  //   type: Array,
+  //   required: false
+  // },
 
    
 })

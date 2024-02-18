@@ -8,6 +8,7 @@ const WineTask = require('../models/wineTask')
 const WineSubTask = require('../models/wineSubTask')
 const WineLab = require('../models/wineLab')
 const Vessel = require('../models/vessel')
+const Additive = require('../models/additive')
 
 
 // get wine tasks
@@ -156,7 +157,7 @@ router.post('/wineTask', auth, async (req, res) => {
         subTask.date = wineTask.date
         subTask.wine = ingredient.wine
         subTask.wineTag = `${wine.vintage} ${wine.lot}`
-        subTaskVessel = wine.vessel._id
+        subTask.vessel = wine.vessel._id
         subTask.vesselLabel = wine.vessel.label
         subTask.destWine = wineTask.wine
         subTask.destWineTag = wineTask.wineTag
@@ -181,10 +182,34 @@ router.post('/wineTask', auth, async (req, res) => {
       }
 
 
+    } else if (data.type === 'additive') {      
+
+
+      // create the subTasks  
+      for (const element of data.additives || []) {
+  
+        const subTask = new WineSubTask()
+  
+        // find the additive
+        const additive = await Additive.findOne({ _id: element.id})
+  
+        subTask.company = req.user.company._id,
+        subTask.type = data.type
+        subTask.wineTask = wineTask._id
+        subTask.number = wineTask.number
+        subTask.date = wineTask.date
+        subTask.additive = additive.id
+        subTask.additiveLabel = additive.label
+        subTask.additiveUnit = additive.unit
+        subTask.destWine = wineTask.wine
+        subTask.destWineTag = wineTask.wineTag
+        subTask.destVesselLabel = wineTask.vesselLabel
+        subTask.quantity = additive.quantity
+        subTask.userName = wineTask.userName
+ 
+        await subTask.save()      
+      }
     }
-
-
-
 
     // save it
     await wineTask.save()
