@@ -50,7 +50,7 @@ router.get('/wine/:id', auth, async (req, res) => {
     const wine = await Wine.findOne(searchCriteria)
     
     // Populate the vessel field with the label and capacity of the vessel
-    const populateWineOptions = {path: 'vessel', select: 'label capacity'}
+    const populateWineOptions = {path: 'vessel', select: 'label capacity number type'}
     
     if (!wine) {
       res.status(404).send()
