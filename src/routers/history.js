@@ -195,17 +195,20 @@ router.post('/wineTask', auth, async (req, res) => {
   
         subTask.company = req.user.company._id,
         subTask.type = data.type
+        
         subTask.wineTask = wineTask._id
         subTask.number = wineTask.number
         subTask.date = wineTask.date
+        subTask.userName = wineTask.userName
+
         subTask.additive = additive.id
         subTask.additiveLabel = additive.label
         subTask.additiveUnit = additive.unit
+        subTask.quantity = element.quantity
+        
         subTask.destWine = wineTask.wine
         subTask.destWineTag = wineTask.wineTag
         subTask.destVesselLabel = wineTask.vesselLabel
-        subTask.quantity = additive.quantity
-        subTask.userName = wineTask.userName
  
         await subTask.save()      
       }

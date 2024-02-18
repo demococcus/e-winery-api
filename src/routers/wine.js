@@ -13,7 +13,7 @@ router.get('/wines', auth, async (req, res) => {
     const searchCriteria = {company, archived: {$ne: true}} 
 
     // populate the tank field with the label of the tank
-    const populateVesselOptions = {path: 'vessel', select: 'label'}
+    const populateVesselOptions = {path: 'vessel', select: 'label capacity number type'}
 
     // populate the event field with the lab events ordered by date
     const populateEventOptions = {path: 'lastLab', select: 'date', options: { sort: { 'date': -1 } }}
