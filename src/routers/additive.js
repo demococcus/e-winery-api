@@ -83,7 +83,7 @@ router.delete('/additive/:id', auth, async (req, res) => {
     }
 
     await additive.deleteOne({ _id })
-    res.send(vessel)
+    res.send(additive)
   } catch(e) {
     res.status(500).send()
     console.error(e)
