@@ -21,7 +21,7 @@ router.get('/vessels', auth, async (req, res) => {
         .find(searchCriteria)
         .populate('wines', 'vintage lot quantity')
         .lean()
-        .exec();
+        .exec()
 
 
         // Iterate over each vessel and add a property 'status' to it
@@ -89,7 +89,7 @@ router.get('/vessel/:id', auth, async (req, res) => {
       .findOne(searchCriteria)
       .populate('wines', 'vintage name')
       .lean()
-      .exec();
+      .exec()
       
       if (!vessel) {
           res.status(404).send()
@@ -142,7 +142,7 @@ router.delete('/vessel/:id', auth, async (req, res) => {
         }
 
         // Delete the vessel
-        await Vessel.deleteOne({ _id })     
+        await vessel.deleteOne({ _id })     
         
         res.send(vessel)
     } catch(e) {

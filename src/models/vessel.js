@@ -16,9 +16,9 @@ const vesselSchema = new mongoose.Schema({
         // unique: true, not a good idea of the same database is used for more than one company
         validate: {
             validator: function(value) {
-                return value.length >= 2;
+                return value.length >= 3;
             },
-            message: 'Label must have a length greater than 6.'
+            message: 'Label must have a length greater than 3.'
         }
     },
 
@@ -37,7 +37,6 @@ const vesselSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true,
-        default: 1,
         validate: {
             validator: function(value) {
                 return ["barrel", "tank"].includes(value);

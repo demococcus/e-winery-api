@@ -9,6 +9,7 @@ const vesselRouter = require('./routers/vessel')
 const wineRouter = require('./routers/wine')
 const companyRouter = require('./routers/company')
 const invitationRouter = require('./routers/invitation')
+const additiveRouter = require('./routers/additive')
 
 
 const app = express()
@@ -37,6 +38,7 @@ app.use(wineRouter)
 app.use(wineRouter)
 app.use(companyRouter)
 app.use(invitationRouter)
+app.use(additiveRouter)
 
 
 
