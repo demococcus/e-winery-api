@@ -50,7 +50,7 @@ router.get('/users/logoutAll', auth, async (req, res) => {
 
 })
 
-router.post('/users', async (req, res) => {
+router.post('/users/signup', async (req, res) => {
 
     // verify if the user already exists
     existingUser = await User.findOne({email: req.body.email})
@@ -76,8 +76,15 @@ router.post('/users', async (req, res) => {
 
 
     try {
+        // save the user
         await user.save()
+
+        // populate the company info
+        await user.populate({path: 'company', select: 'name'})
+        
+        // generate token
         const token = await user.generateAuthToken()
+        
         res.status(201).send({user, token})
     } catch (e) {
         res.status(400).send(e)
