@@ -35,6 +35,10 @@ router.get('/vessels', auth, async (req, res) => {
             if (vessel.wines.length === 0) {
                 // No vines inside - must be empty
                 vessel.status = 'empty'
+                vessel.usedCapacity = 0
+                vessel.totalCapacity = Math.round(vessel.number * vessel.capacity)
+                vessel.availableCapacity = Math.round(vessel.number * vessel.capacity)
+
 
             } else if (vessel.wines.length > 0) {
                 // Calculate the volume of the wines inside the vessel
@@ -43,20 +47,25 @@ router.get('/vessels', auth, async (req, res) => {
                 }, 0)
 
                 vessel.usedCapacity = Math.round(usedCapacity);
+                vessel.totalCapacity = Math.round(vessel.number * vessel.capacity)
                 
 
                 // Calculate the available volume in the vessel
                 availableCapacity = totalCapacity - vessel.usedCapacity
+                vessel.availableCapacity = Math.round(availableCapacity)
+                
      
                 // Set the status of the vessel
                 if (vessel.usedCapacity > totalCapacity) {
                     vessel.status = 'over-capacity'
+                    vessel.availableCapacity = 0
                 } else if (vessel.usedCapacity === totalCapacity) {
                     vessel.status = 'full'
+                    vessel.availableCapacity = 0
                 } else if (availableCapacity >= vessel.capacity) {
-                    vessel.status = 'available'
+                    vessel.status = 'available'                   
                 } else {
-                    vessel.status = 'need-top-up'
+                    vessel.status = 'need-top-up'                
                 }              
 
             }
