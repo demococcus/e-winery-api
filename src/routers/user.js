@@ -73,6 +73,7 @@ router.post('/users/signup', async (req, res) => {
     user.name = invitation.name
     user.role = invitation.role
     user.company = invitation.company
+    user.language = invitation.language
 
 
     try {

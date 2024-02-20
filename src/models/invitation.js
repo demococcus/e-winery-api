@@ -38,6 +38,15 @@ const invitationSchema = new mongoose.Schema({
     required: true,
     ref: 'Company'
   },
+
+  language: {
+    type: String,
+    required: false,
+    minlength: 2,
+    default: 'en',
+    trim: true
+  }, 
+
 })
 
 

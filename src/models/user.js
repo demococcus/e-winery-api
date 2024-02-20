@@ -56,6 +56,15 @@ const userSchema = new mongoose.Schema({
         ref: 'Companie'
       },
 
+    language: {
+    type: String,
+    required: false,
+    minlength: 2,
+    default: 'en',
+    trim: true
+    }, 
+
+
     tokens: [{
         token: {
             type: String,
