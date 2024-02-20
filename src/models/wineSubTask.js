@@ -47,7 +47,7 @@ const schema = new mongoose.Schema({
 
   additive: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
+    required: false,
     ref: 'Additive'
   },
 
@@ -58,12 +58,12 @@ const schema = new mongoose.Schema({
 
   additiveLabel: {
     type: String,
-    required: true
+    required: false
   },  
 
   additiveUnit: {
     type: String,
-    required: true
+    required: false
   }, 
 
   vesselLabel: {
