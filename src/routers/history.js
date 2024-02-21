@@ -81,6 +81,7 @@ router.post('/wineTask', auth, async (req, res) => {
 
       // crate a new wine with the same properties as the existing one    
       const nextWine = new Wine({
+        company: req.user.company._id,
         vintage: wine.vintage,
         lot: wine.lot,
         status: wine.status,
