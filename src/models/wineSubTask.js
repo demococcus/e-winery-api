@@ -66,6 +66,12 @@ const schema = new mongoose.Schema({
     required: false
   }, 
 
+  vessel: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    ref: 'Vessel'
+  },
+
   vesselLabel: {
     type: String,
     required: false
