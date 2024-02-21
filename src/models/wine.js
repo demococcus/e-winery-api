@@ -93,7 +93,7 @@ wineSchema.pre('save', async function (next) {
     // Wine is being archived: removing it from the vessel
     if (wine.isModified('archived') && wine.archived === true) {
         wine.vessel = null
-        console.log('Wine is being archived: removing it from the vessel')
+        // console.log('Wine is being archived: removing it from the vessel')
     }
 
     // Wine is being added to a vessel: removing the archived status

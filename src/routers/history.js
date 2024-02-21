@@ -419,17 +419,12 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
     }
 
     if (simpleTaskTypes.includes(task.type)) {
-      // simply delete the task
-
-      console.log('simple task')
 
       await task.deleteOne({ _id })
       res.send(task)
       return
 
     } else if (task.type === 'transfer') {
-
-      console.log('transfer task')      
 
       // change the vessel of the wine
       wine.vessel = task.vessel;
@@ -441,8 +436,6 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
       return
 
      } else if (task.type === 'additive') { 
-        
-        console.log('additive task')      
   
         // delete the task
         await task.deleteOne({ _id: task._id })
@@ -453,8 +446,6 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
 
      } else if (task.type === 'transfer-partial') {
 
-
-       
       // find the subTask
       const subTask = await WineSubTask.findOne({wineTask: task._id, company: req.user.company._id})
       if (!subTask) {
@@ -573,10 +564,6 @@ const isLastTask = async (wine, taskNumber) => {
 
   const lastSubTask  = await WineSubTask.findOne({wine: wine._id}).sort({number: -1}).exec()
   const lastSubTaskNumber = lastSubTask ? lastSubTask.number : null  
-
-  // console.log('task.number', taskNumber)
-  // console.log('lastTaskNumber', lastTaskNumber)
-  // console.log('lastSubTaskNumber', lastSubTaskNumber)
 
   if (lastTaskNumber > taskNumber || lastSubTaskNumber > taskNumber) {
     return false
