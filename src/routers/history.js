@@ -72,10 +72,9 @@ router.post('/wineTask', auth, async (req, res) => {
     wineTask.vessel = wine.vessel._id
     wineTask.vesselLabel = wine.vessel.label
 
-    wineTask.nextQuantity = data.nextQuantity;    
+    wineTask.nextQuantity = data.nextQuantity  
+    if (data.type === 'split-from') { 
 
-    if (data.type === 'transfer-partial') { 
-      
       // find the nextVessel
       const nextVessel = await Vessel.findOne({ _id: data.nextVessel})
       wineTask.nextVessel = nextVessel._id
@@ -96,35 +95,41 @@ router.post('/wineTask', auth, async (req, res) => {
       wine.quantity -= data.nextQuantity
       await wine.save()
 
+      // add the details about the new wine to the task
+      wineTask.nextWine = nextWine._id
+      wineTask.nextWineTag = `${nextWine.vintage} ${nextWine.lot}`
 
-      // create a subtask for the original wine
+      // create a subtask for the new wine
       const subTask = new WineSubTask({
         company: req.user.company._id,
-        type: "transfer-out",
+        type: "split-to",
         wineTask: wineTask._id,
-        number: wineTask.number,
+        number: wineTask.number,        
         date: wineTask.date,
-        wine: wine._id,
-        wineTag: `${wine.vintage} ${wine.lot}`,
-        vessel: wine.vessel._id,
-        vesselLabel: wine.vessel.label,
-        destWine: nextWine._id,
-        destWineTag: `${wine.vintage} ${wine.lot}`,
-        destVesselLabel: nextVessel.label,
-        quantity: data.nextQuantity,
-        quantityAfter: data.quantity - data.nextQuantity,
         userName: wineTask.userName,
+
+        // that would be the new wine
+        wine: nextWine._id,
+        wineTag: `${nextWine.vintage} ${nextWine.lot}`,
+        vessel: nextVessel._id,
+        vesselLabel: nextVessel.label,
+
+        // parent wine details
+        parentWine: wine._id,
+        parentWineTag: `${wine.vintage} ${wine.lot}`,
+        parentVesselLabel: wine.vessel.label,
+        
+        // that would be the quantity of the new wine
+        quantity: data.nextQuantity,
+        
       })
 
       await subTask.save()
-      
-
-      // now modify the task so that it reflects the actions on the new wine
-      wineTask.wine = nextWine._id
-      wineTask.wineTag = `${wine.vintage} ${wine.lot}`
 
 
-      
+
+
+
     } else if (data.type === 'transfer') {
 
       // find the vessel
@@ -222,7 +227,6 @@ router.post('/wineTask', auth, async (req, res) => {
       return
     }
     
-
     // save it
     await wineTask.save()
 
@@ -435,38 +439,79 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
       res.send(task)
       return
 
-     } else if (task.type === 'additive') { 
-  
-        // delete the task
-        await task.deleteOne({ _id: task._id })
-        res.send(task)
-        return
+    } else if (task.type === 'additive') { 
 
-        // in the future, if we track the quantity of the additives, should restore the quantity
+      // delete the task
+      await task.deleteOne({ _id: task._id })
+      res.send(task)
+      return
 
-     } else if (task.type === 'transfer-partial') {
+      // in the future, if we track the quantity of the additives, should restore the quantity
 
-      // find the subTask
-      const subTask = await WineSubTask.findOne({wineTask: task._id, company: req.user.company._id})
-      if (!subTask) {
-        res.status(404).send({'error': 'subTask not found'})
-        return
-      }
+    } else if (task.type === 'split-from') {
+
+    // find the subTask
+    const subTask = await WineSubTask.findOne({wineTask: task._id, company: req.user.company._id})
+    if (!subTask) {
+      res.status(404).send({'error': 'subTask not found'})
+      return
+    }
+    
+    // find the next wine
+    const nextWine = await Wine.findOne({ _id: subTask.wine, company: req.user.company._id})
+    if (!nextWine) {
+      res.status(404).send({'error': 'nextWine wine not found'})
+      return
+    }
       
+    // find the last tasks of the nextWine
+    const lastTackCheck = await isLastTask(nextWine, task.number)
+    if (!lastTackCheck) {
+      res.status(400).send({'error': 'Cannot delete a task that is not the last one of the nextWine wine'})
+      return
+    }
+
+    // restore the quantity of the wine
+    wine.quantity = task.quantity
+    await wine.save()
+
+    // delete the nextWine wine
+    await nextWine.deleteOne({ _id: nextWine.id })
+
+    // delete the subtask
+    await subTask.deleteOne({ _id: subTask.id })
+    
+    // delete the task
+    await task.deleteOne({ _id: task._id })
+    res.send(task)      
+    return
+
+    } else if (task.type === 'blend') {
+
+    // find the sub tasks
+    const subTasks = await WineSubTask.find({wineTask: task._id, company: req.user.company._id})
+    if (!subTasks) {
+      res.status(404).send({'error': 'subTasks not found'})
+      return
+    }
+
+    // iterate over the subTasks
+    for (const subTask of subTasks) {
       // find the parent wine
       const parentWine = await Wine.findOne({ _id: subTask.wine, company: req.user.company._id})
-      if (!parentWine) {
+      if (!parentWine) {  
         res.status(404).send({'error': 'Parent wine not found'})
         return
       }
-        
+
+      
       // find the last tasks of the parentWine
       const lastTackCheck = await isLastTask(parentWine, task.number)
       if (!lastTackCheck) {
         res.status(400).send({'error': 'Cannot delete a task that is not the last one of the parent wine'})
         return
       }
-
+      
       // restore the quantity of the parent wine
       const originalQuantity = subTask.quantity + subTask.quantityAfter
       parentWine.quantity = originalQuantity
@@ -477,78 +522,29 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
       // restore the vessel of the source wine if it was archived
       parentWine.vessel = subTask.vessel
 
+      // save the modifications
       await parentWine.save()
 
-      // delete the child wine
-      await wine.deleteOne({ _id: wine.id })
-
       // delete the subtask
-      await subTask.deleteOne({ _id: subTask.id })
-      
-      // delete the task
-      await task.deleteOne({ _id: task._id })
-      res.send(task)      
+        await subTask.deleteOne({ _id: subTask.id })        
+
+    }
+
+    // restore the quantity of the wine
+    wine.quantity = task.quantity
+    await wine.save()
+
+    // delete the task
+    await task.deleteOne({ _id: task._id })
+
+    // send and exit
+    res.send(task)      
+    return
+
+    } else {
+      res.status(400).send({'error': 'Unknown task type'})
       return
-
-     } else if (task.type === 'blend') {
-
-      // find the sub tasks
-      const subTasks = await WineSubTask.find({wineTask: task._id, company: req.user.company._id})
-      if (!subTasks) {
-        res.status(404).send({'error': 'subTasks not found'})
-        return
-      }
-
-      // iterate over the subTasks
-      for (const subTask of subTasks) {
-        // find the parent wine
-        const parentWine = await Wine.findOne({ _id: subTask.wine, company: req.user.company._id})
-        if (!parentWine) {  
-          res.status(404).send({'error': 'Parent wine not found'})
-          return
-        }
-
-        
-        // find the last tasks of the parentWine
-        const lastTackCheck = await isLastTask(parentWine, task.number)
-        if (!lastTackCheck) {
-          res.status(400).send({'error': 'Cannot delete a task that is not the last one of the parent wine'})
-          return
-        }
-        
-        // restore the quantity of the parent wine
-        const originalQuantity = subTask.quantity + subTask.quantityAfter
-        parentWine.quantity = originalQuantity
-
-        // un-archive the source wine if it was archived
-        parentWine.archived = false
-        
-        // restore the vessel of the source wine if it was archived
-        parentWine.vessel = subTask.vessel
-
-        // save the modifications
-        await parentWine.save()
-
-        // delete the subtask
-         await subTask.deleteOne({ _id: subTask.id })        
-
-      }
-
-      // restore the quantity of the wine
-      wine.quantity = task.quantity
-      await wine.save()
-
-      // delete the task
-      await task.deleteOne({ _id: task._id })
-
-      // send and exit
-      res.send(task)      
-      return
-
-     } else {
-       res.status(400).send({'error': 'Unknown task type'})
-       return
-     }
+    }
 
 
   } catch(e) {

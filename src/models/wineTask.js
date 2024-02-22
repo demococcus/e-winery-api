@@ -3,7 +3,7 @@ const validator = require('validator')
 
 const supportedTypes = [
   "aerate", "decant", "filter", "freeze",  "remontage",
-  "transfer", "transfer-partial", "blend", "additive"
+  "transfer", "transfer-partial", "blend", "additive", "split-from",
 ]
 
 // schema for an event that represents an operation on a wine
@@ -63,17 +63,6 @@ const schema = new mongoose.Schema({
     required: false
   },
 
-  nextVessel: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: false,
-    ref: 'Vessel'
-  },
-
-  nextVesselLabel: {
-    type: String,
-    required: false
-  },
-
   wine: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -89,6 +78,29 @@ const schema = new mongoose.Schema({
     type: Number,
     required: false
   },
+
+  nextWine: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    ref: 'Wine'
+  },
+
+  nextWineTag: {
+    type: String,
+    required: false
+  },
+
+  nextVessel: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    ref: 'Vessel'
+  },
+
+  nextVesselLabel: {
+    type: String,
+    required: false
+  },
+
 
   nextQuantity: {
     type: Number,
