@@ -1,35 +1,29 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 
-const supportedTypes = ["transfer-out", "additive", "split-to"]
+const wineSubTaskTypes = ["transfer-out", "split-to", "additive"]
 
 // schema for an event that represents an operation on a wine
 const schema = new mongoose.Schema({
-
-  company: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'Companie'
-  },
 
   type: {
     type: String,
     required: true,
     validate(value) {
-      if (!supportedTypes.includes(value)) {
+      if (!wineSubTaskTypes.includes(value)) {
         throw new Error('Invalid type.')
       }
     },
   },
-  
+
   // the parent task
   wineTask: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'wineOp'
-  },  
-  
-  number: {
+    ref: 'wineTask'
+  }, 
+
+  seqNumber: {
     type: Number,
     required: true
   },
@@ -39,30 +33,36 @@ const schema = new mongoose.Schema({
     required: true
   },
 
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'User'
+  },
+
+  userName: {
+    type: String,
+    required: true
+  },
+
+  company: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'Companie'
+  },
+
   wine: {
     type: mongoose.Schema.Types.ObjectId,
     required: false,
     ref: 'Wine'
   },
 
-  additive: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: false,
-    ref: 'Additive'
-  },
-
-  wineTag: {
+  wineLot: {
     type: String,
     required: false
   },
 
-  additiveLabel: {
-    type: String,
-    required: false
-  },  
-
-  additiveUnit: {
-    type: String,
+  wineVintage: {
+    type: Number,
     required: false
   }, 
 
@@ -75,55 +75,60 @@ const schema = new mongoose.Schema({
   vesselLabel: {
     type: String,
     required: false
-  },
+  },  
 
-  destWine: {
+  refWine: {
     type: mongoose.Schema.Types.ObjectId,
-    required: false,
+    required: true,
     ref: 'Wine'
   },
 
-  destWineTag: {
+  refWineLot: {
     type: String,
-    required: false
+    required: true
   },
 
-  destVesselLabel: {
-    type: String,
+  refWineVintage: {
+    type: Number,
     required: false
+  }, 
+
+  refVessel: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'Vessel'
   },
 
-  parentWine: {
+  refVesselLabel: {
+    type: String,
+    required: true
+  },  
+   
+  additive: {
     type: mongoose.Schema.Types.ObjectId,
     required: false,
-    ref: 'Wine'
+    ref: 'Additive'
   },
 
-  parentWineTag: {
+  additiveLabel: {
     type: String,
     required: false
-  },
+  }, 
 
-  parentVesselLabel: {
+  additiveUnit: {
     type: String,
     required: false
+  }, 
+
+  quantityBefore: {
+    type: Number,
+    required: false
   },
-  
 
   quantity: {
     type: Number,
     required: true
   },
-
-  quantityAfter: {
-    type: Number,
-    required: false
-  },
-  
-  userName: {
-    type: String,
-    required: true
-  } 
   
    
 })
@@ -131,4 +136,4 @@ const schema = new mongoose.Schema({
 
 const WineSubTask = mongoose.model('WineSubTask', schema)
 
-module.exports = WineSubTask
+module.exports = WineSubTask, wineSubTaskTypes

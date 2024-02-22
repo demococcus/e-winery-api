@@ -1,64 +1,53 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 
-const supportedTypes = [
-  "aerate", "decant", "filter", "freeze",  "remontage",
-  "transfer", "transfer-partial", "blend", "additive", "split-from",
-]
+const wineTaskSimpleTypes = ["aerate", "decant", "filter", "freeze",  "remontage",]
+const wineTaskComplexTypes = ["transfer", "split-from", "blend", "additive",]
+const wineTaskTypes = [...wineTaskSimpleTypes, ...wineTaskComplexTypes]
+
 
 // schema for an event that represents an operation on a wine
 const schema = new mongoose.Schema({
-
-  company: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'Companie'
-  },
 
   // type of operation - supplied by the frontend (and validated at creation)
   type: {
     type: String,
     required: true,
     validate(value) {
-      if (!supportedTypes.includes(value)) {
+      if (!wineTaskTypes.includes(value)) {
         throw new Error('Invalid type.')
       }
     },
   },
 
-  number: {
+  seqNumber: {
     type: Number,
-    required: false
+    required: true
   },
 
   date: {
     type: Date,
-    required: false
-  },
-
-  note: {
-    type: String,
-    required: false
+    required: true
   },
 
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    required: false,
+    required: true,
     ref: 'User'
   },
 
   userName: {
     type: String,
-    required: false
+    required: true
   },
 
-  vessel: {
+  company: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'Vessel'
-  },
-
-  vesselLabel: {
+    ref: 'Companie'
+  }, 
+  
+  note: {
     type: String,
     required: false
   },
@@ -69,24 +58,29 @@ const schema = new mongoose.Schema({
     ref: 'Wine'
   },
 
-  wineTag: {
+  wineLot: {
     type: String,
-    required: false
+    required: true
   },
 
-  quantity: {
+  wineVintage: {
     type: Number,
     required: false
-  },
+  },  
 
-  nextWine: {
+  vessel: {
     type: mongoose.Schema.Types.ObjectId,
-    required: false,
-    ref: 'Wine'
+    required: true,
+    ref: 'Vessel'
   },
 
-  nextWineTag: {
+  vesselLabel: {
     type: String,
+    required: true
+  },  
+
+  quantityBefore: {
+    type: Number,
     required: false
   },
 
@@ -101,23 +95,12 @@ const schema = new mongoose.Schema({
     required: false
   },
 
-
-  nextQuantity: {
+  quantity: {
     type: Number,
     required: false
   },
 
-  // ingredients: {
-  //   type: Array,
-  //   required: false
-  // },
-
-  // additives: {
-  //   type: Array,
-  //   required: false
-  // },
-
-   
+ 
 })
 
 // wineTask - wineSubOp
@@ -130,4 +113,4 @@ schema.virtual('subTasks', {
 
 const WineTask = mongoose.model('WineTask', schema)
 
-module.exports = WineTask
+module.exports = WineTask, wineTaskSimpleTypes, wineTaskComplexTypes, wineTaskTypes

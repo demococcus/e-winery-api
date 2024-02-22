@@ -53,31 +53,44 @@ router.post('/wineTask', auth, async (req, res) => {
     wineTask.company = req.user.company._id
 
     wineTask.type = data.type
-    wineTask.number = await Counter.getNextValue('wineTaskSeq',  req.user.company._id)
+    wineTask.seqNumber = await Counter.getNextValue('wineTaskSeq',  req.user.company._id)
     wineTask.date = data.date || new Date()
     wineTask.note = data.note
     wineTask.user = req.user._id
     wineTask.userName = req.user.name 
     
     
-    wineTask.quantity = data.quantity
+    // find the wine
     wineTask.wine = data.wine
+    const wine = await Wine.findOne({ _id: data.wine, company: req.user.company._id})
+    if (!wine) {
+      res.status(404).send({"error": "Wine not found"})
+      return
+    }
+    wineTask.wineLot = wine.lot
+    wineTask.wineVintage = wine.vintage
+    wineTask.quantityBefore = wine.quantity  
 
-    // find the wine and its vessel
-    const wine = await Wine.findOne({ _id: data.wine})
+    // find the current vessel
     const populateWineOptions = {path: 'vessel', select: 'label'}
     await wine.populate(populateWineOptions)
-
-    wineTask.wineTag = `${wine.vintage} ${wine.lot}`
     wineTask.vessel = wine.vessel._id
     wineTask.vesselLabel = wine.vessel.label
 
-    wineTask.nextQuantity = data.nextQuantity  
+    // add data according to the type of the task
+
     if (data.type === 'split-from') { 
 
+      // the quantity transferred to the new wine
+      wineTask.quantity = data.quantity
+
       // find the nextVessel
-      const nextVessel = await Vessel.findOne({ _id: data.nextVessel})
-      wineTask.nextVessel = nextVessel._id
+      wineTask.nextVessel = data.nextVessel
+      const nextVessel = await Vessel.findOne({ _id: data.nextVessel, company: req.user.company._id})
+      if (!nextVessel) {
+        res.status(404).send({"error": "nextVessel not found"})
+        return
+      }
       wineTask.nextVesselLabel = nextVessel.label
 
       // crate a new wine with the same properties as the existing one    
@@ -86,54 +99,59 @@ router.post('/wineTask', auth, async (req, res) => {
         vintage: wine.vintage,
         lot: wine.lot,
         status: wine.status,
-        quantity: data.nextQuantity,
-        vessel: nextVessel._id,
+        quantity: data.quantity,
+        vessel: data.nextVessel,
       })
       await nextWine.save()
 
-      // save the modifications in the current wine
-      wine.quantity -= data.nextQuantity
-      await wine.save()
 
-      // add the details about the new wine to the task
-      wineTask.nextWine = nextWine._id
-      wineTask.nextWineTag = `${nextWine.vintage} ${nextWine.lot}`
+      // save the modifications in the current wine
+      wine.quantity -= data.quantity
+      await wine.save()
 
       // create a subtask for the new wine
       const subTask = new WineSubTask({
         company: req.user.company._id,
         type: "split-to",
         wineTask: wineTask._id,
-        number: wineTask.number,        
+        seqNumber: wineTask.seqNumber,        
         date: wineTask.date,
+        user: wineTask.user,
         userName: wineTask.userName,
 
         // that would be the new wine
         wine: nextWine._id,
-        wineTag: `${nextWine.vintage} ${nextWine.lot}`,
+        wineLot: nextWine.lot,
+        wineVintage: nextWine.vintage,
         vessel: nextVessel._id,
         vesselLabel: nextVessel.label,
 
         // parent wine details
-        parentWine: wine._id,
-        parentWineTag: `${wine.vintage} ${wine.lot}`,
-        parentVesselLabel: wine.vessel.label,
+        refWine: wine._id,
+        refWineLot: wine.lot,
+        refWineVintage: wine.vintage,
+        refVesselLabel: wine.vessel.label,
+
+        // parent vessel details
+        refVessel:  wineTask.vessel,
+        refVesselLabel:  wineTask.vesselLabel,
         
-        // that would be the quantity of the new wine
-        quantity: data.nextQuantity,
+        // the quantity transferred to the new wine
+        quantity: data.quantity,
         
       })
 
       await subTask.save()
 
 
-
-
-
     } else if (data.type === 'transfer') {
 
       // find the vessel
-      const nextVessel = await Vessel.findOne({ _id: data.nextVessel})
+      const nextVessel = await Vessel.findOne({ _id: data.nextVessel, company: req.user.company._id})
+      if (!nextVessel) {
+        res.status(404).send({"error": "nextVessel not found"})
+        return
+      }
       wineTask.nextVessel = nextVessel._id
       wineTask.nextVesselLabel = nextVessel.label
 
@@ -143,43 +161,57 @@ router.post('/wineTask', auth, async (req, res) => {
 
 
     } else if (data.type === 'blend') {      
-      wineTask.nextQuantity = data.nextQuantity
 
+      // wineTask.nextQuantity = data.nextQuantity
       // change the quantity of the wine
-      wine.quantity = data.nextQuantity
-      await wine.save()
+      // wine.quantity = data.nextQuantity
+      // await wine.save()
 
       // create the subTasks
+
+      let quantity
   
-      for (const ingredient of data.ingredients || []) {
+      for (const subWine of data.subWines || []) {
   
         const subTask = new WineSubTask()
-  
-        // find the wine and its vessel
-        const wine = await Wine.findOne({ _id: ingredient.wine})
-        const populateWineOptions = {path: 'vessel', select: 'label'}
-        await wine.populate(populateWineOptions)
-  
-        subTask.company = req.user.company._id,
+
         subTask.type = "transfer-out"
         subTask.wineTask = wineTask._id
-        subTask.number = wineTask.number
+        subTask.seqNumber = wineTask.seqNumber
         subTask.date = wineTask.date
-        subTask.wine = ingredient.wine
-        subTask.wineTag = `${wine.vintage} ${wine.lot}`
+        subTask.user = wineTask.user
+        subTask.userName = wineTask.userName
+        subTask.company = req.user.company._id
+
+        subTask.refWine = wineTask.wine
+        subTask.refWineLot = wineTask.wineLot
+        subTask.refWineVintage = wineTask.wineVintage
+
+        subTask.refVessel = wineTask.vessel
+        subTask.refVesselLabel = wineTask.vesselLabel
+          
+        // find the wine and its vessel
+        const wine = await Wine.findOne({ _id: subWine.id,  company: req.user.company._id})
+        if (!wine) {
+          res.status(404).send({"error": "subWine not found"})
+          return
+        }
+        const populateWineOptions = {path: 'vessel', select: 'label'}
+        await wine.populate(populateWineOptions)       
+
+        subTask.wine = wine.id
+        subTask.wineLot = wine.lot
+        subTask.wineVintage = wine.vintage
         subTask.vessel = wine.vessel._id
         subTask.vesselLabel = wine.vessel.label
-        subTask.destWine = wineTask.wine
-        subTask.destWineTag = wineTask.wineTag
-        subTask.destVesselLabel = wineTask.vesselLabel
-        subTask.quantity = ingredient.quantity
-        subTask.quantityAfter = wine.quantity - ingredient.quantity
-        subTask.userName = wineTask.userName
+        
+        subTask.quantityBefore = wine.quantity
+        subTask.quantity = subWine.quantity
  
         await subTask.save()
   
         // modify the quantity of the source wine
-        wine.quantity = subTask.quantityAfter
+        wine.quantity == subWine.quantity
 
         // archive the wine if it has no quantity left
         if (wine.quantity <= 0) {
@@ -199,27 +231,33 @@ router.post('/wineTask', auth, async (req, res) => {
       for (const element of data.additives || []) {
   
         const subTask = new WineSubTask()
-  
-        // find the additive
-        const additive = await Additive.findOne({ _id: element.id})
-  
-        subTask.company = req.user.company._id,
-        subTask.type = data.type
-        
-        subTask.wineTask = wineTask._id
-        subTask.number = wineTask.number
-        subTask.date = wineTask.date
-        subTask.userName = wineTask.userName
 
+        subTask.type = data.type
+        subTask.wineTask = wineTask._id
+        subTask.seqNumber = wineTask.seqNumber
+        subTask.date = wineTask.date
+        subTask.user = wineTask.user
+        subTask.userName = wineTask.userName
+        subTask.company = req.user.company._id,
+
+        subTask.refWine = wineTask.wine
+        subTask.refWineLot = wineTask.wineLot
+        subTask.refWineVintage = wineTask.wineVintage
+
+        subTask.refVessel = wineTask.vessel
+        subTask.refVesselLabel = wineTask.vesselLabel
+        
+        // find the additive
+        const additive = await Additive.findOne({ _id: element.id, company: req.user.company._id})
+        if (!additive) {
+          res.status(404).send({"error": "additive not found"})
+          return
+        }       
         subTask.additive = additive.id
         subTask.additiveLabel = additive.label
         subTask.additiveUnit = additive.unit
         subTask.quantity = element.quantity
-        
-        subTask.destWine = wineTask.wine
-        subTask.destWineTag = wineTask.wineTag
-        subTask.destVesselLabel = wineTask.vesselLabel
- 
+   
         await subTask.save()      
       }
     } else if (!simpleTaskTypes.includes(wineTask.type)) {
@@ -272,7 +310,8 @@ router.post('/wineLab', auth, async (req, res) => {
       userName: req.user.name,
       vesselLabel: wine.vessel.label,
       wine: wine._id,
-      wineTag: `${wine.vintage} ${wine.lot}`,  
+      wineLot: wine.lot,  
+      wineVintage: wine.vintage,  
 
     })
 

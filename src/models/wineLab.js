@@ -56,8 +56,13 @@ const schema = new mongoose.Schema({
     ref: 'Wine'
   },
 
-  // extracted from the wine
-  wineTag: {
+
+  wineLot: {
+    type: String,
+    required: false
+  },
+
+  wineVintage: {
     type: String,
     required: false
   },
