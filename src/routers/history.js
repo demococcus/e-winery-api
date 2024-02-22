@@ -169,10 +169,15 @@ router.post('/wineTask', auth, async (req, res) => {
 
       // create the subTasks
 
-      let quantity
+      let blendQuantity = 0
   
-      for (const subWine of data.subWines || []) {
+      // do for each ingredient (subWine)
+      for (const dataSubWine of data.subWines || []) {
+
+        // the quantity that is added to the blend
+        blendQuantity += dataSubWine.quantity
   
+        // create the subTask
         const subTask = new WineSubTask()
 
         subTask.type = "transfer-out"
@@ -190,38 +195,43 @@ router.post('/wineTask', auth, async (req, res) => {
         subTask.refVessel = wineTask.vessel
         subTask.refVesselLabel = wineTask.vesselLabel
           
-        // find the wine and its vessel
-        const wine = await Wine.findOne({ _id: subWine.id,  company: req.user.company._id})
-        if (!wine) {
+        // find the subWine and its vessel
+        const subWine = await Wine.findOne({ _id: dataSubWine.id,  company: req.user.company._id})
+        if (!subWine) {
           res.status(404).send({"error": "subWine not found"})
           return
         }
         const populateWineOptions = {path: 'vessel', select: 'label'}
-        await wine.populate(populateWineOptions)       
+        await subWine.populate(populateWineOptions)       
 
-        subTask.wine = wine.id
-        subTask.wineLot = wine.lot
-        subTask.wineVintage = wine.vintage
-        subTask.vessel = wine.vessel._id
-        subTask.vesselLabel = wine.vessel.label
+        subTask.wine = subWine.id
+        subTask.wineLot = subWine.lot
+        subTask.wineVintage = subWine.vintage
+        subTask.vessel = subWine.vessel._id
+        subTask.vesselLabel = subWine.vessel.label
         
-        subTask.quantityBefore = wine.quantity
-        subTask.quantity = subWine.quantity
+        subTask.quantityBefore = subWine.quantity
+        subTask.quantity = dataSubWine.quantity
  
         await subTask.save()
   
         // modify the quantity of the source wine
-        wine.quantity == subWine.quantity
+        subWine.quantity -= dataSubWine.quantity
 
         // archive the wine if it has no quantity left
-        if (wine.quantity <= 0) {
-          wine.archived = true
-          wine.tank = null
+        if (subWine.quantity <= 0) {
+          subWine.archived = true
+          subWine.tank = null
         };
 
 
-        await wine.save()      
+        await subWine.save()      
       }
+
+      // modify the quantity of the blend
+      wine.quantity += blendQuantity
+      
+      await wine.save()
 
 
     } else if (data.type === 'additive') {      
@@ -453,7 +463,7 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
     }
 
     // find the last tasks of the wine
-    const lastTackCheck = await isLastTask(wine, task.number)
+    const lastTackCheck = await isLastTask(wine, task.seqNumber)
 
     // reject the request if the task is not the last one
     if (!lastTackCheck) {
@@ -479,6 +489,10 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
       return
 
     } else if (task.type === 'additive') { 
+      
+
+      // delete the subTasks
+      await WineSubTask.deleteMany({wineTask: task._id, company: req.user.company._id})
 
       // delete the task
       await task.deleteOne({ _id: task._id })
@@ -504,14 +518,14 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
     }
       
     // find the last tasks of the nextWine
-    const lastTackCheck = await isLastTask(nextWine, task.number)
+    const lastTackCheck = await isLastTask(nextWine, task.seqNumber)
     if (!lastTackCheck) {
       res.status(400).send({'error': 'Cannot delete a task that is not the last one of the nextWine wine'})
       return
     }
 
     // restore the quantity of the wine
-    wine.quantity = task.quantity
+    wine.quantity = task.quantityBefore
     await wine.save()
 
     // delete the nextWine wine
@@ -534,7 +548,7 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
       return
     }
 
-    // iterate over the subTasks
+    // iterate over the subTasks to validate if they have other tasks after the one being deleted
     for (const subTask of subTasks) {
       // find the parent wine
       const parentWine = await Wine.findOne({ _id: subTask.wine, company: req.user.company._id})
@@ -542,18 +556,25 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
         res.status(404).send({'error': 'Parent wine not found'})
         return
       }
-
       
       // find the last tasks of the parentWine
-      const lastTackCheck = await isLastTask(parentWine, task.number)
+      const lastTackCheck = await isLastTask(parentWine, task.seqNumber)
       if (!lastTackCheck) {
         res.status(400).send({'error': 'Cannot delete a task that is not the last one of the parent wine'})
         return
       }
-      
+    }
+
+    // iterate again to take actions
+    for (const subTask of subTasks) {
+      // find the parent wine
+      const parentWine = await Wine.findOne({ _id: subTask.wine, company: req.user.company._id})
+      if (!parentWine) {  
+        res.status(404).send({'error': 'Parent wine not found'})
+        return
+      }      
       // restore the quantity of the parent wine
-      const originalQuantity = subTask.quantity + subTask.quantityAfter
-      parentWine.quantity = originalQuantity
+      parentWine.quantity = subTask.quantityBefore
 
       // un-archive the source wine if it was archived
       parentWine.archived = false
@@ -564,13 +585,14 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
       // save the modifications
       await parentWine.save()
 
-      // delete the subtask
-        await subTask.deleteOne({ _id: subTask.id })        
-
+      
     }
+    
+    // delete the subtasks
+    await WineSubTask.deleteMany({ wineTask: task._id })        
 
     // restore the quantity of the wine
-    wine.quantity = task.quantity
+    wine.quantity = task.quantityBefore
     await wine.save()
 
     // delete the task
@@ -595,10 +617,10 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
 
 const isLastTask = async (wine, taskNumber) => {
   const lastTask  = await WineTask.findOne({wine: wine._id}).sort({number: -1}).exec()
-  const lastTaskNumber = lastTask ? lastTask.number : null
+  const lastTaskNumber = lastTask ? lastTask.seqNumber : null
 
   const lastSubTask  = await WineSubTask.findOne({wine: wine._id}).sort({number: -1}).exec()
-  const lastSubTaskNumber = lastSubTask ? lastSubTask.number : null  
+  const lastSubTaskNumber = lastSubTask ? lastSubTask.seqNumber : null  
 
   if (lastTaskNumber > taskNumber || lastSubTaskNumber > taskNumber) {
     return false
