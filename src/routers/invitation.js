@@ -7,6 +7,7 @@ const admin = require('../middleware/admin')
 const Invitation = require("../models/invitation")
 
 router.post('/invitation', auth, admin, async (req, res) => {
+// router.post('/invitation', async (req, res) => {
 
   const company  = new Invitation(req.body)
   

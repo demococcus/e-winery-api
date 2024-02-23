@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 
-const wineTaskSimpleTypes = ["aerate", "decant", "filter", "freeze",  "remontage",]
+const wineTaskSimpleTypes = ["aerate", "decant", "drain-press", "filter", "freeze",  "remontage",]
 const wineTaskComplexTypes = ["transfer", "split-from", "blend", "additive",]
 const wineTaskTypes = [...wineTaskSimpleTypes, ...wineTaskComplexTypes]
 
@@ -113,4 +113,4 @@ schema.virtual('subTasks', {
 
 const WineTask = mongoose.model('WineTask', schema)
 
-module.exports = WineTask, wineTaskSimpleTypes, wineTaskComplexTypes, wineTaskTypes
+module.exports = WineTask

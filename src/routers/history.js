@@ -10,8 +10,8 @@ const WineLab = require('../models/wineLab')
 const Vessel = require('../models/vessel')
 const Additive = require('../models/additive')
 
+const wineTaskSimpleTypes = ["aerate", "decant", "drain-press", "filter", "freeze",  "remontage",]
 
-const simpleTaskTypes = ["aerate", "decant", "filter", "freeze",  "remontage"]
 
 // get wine tasks
 router.get('/wineTasks', auth, async (req, res) =>{
@@ -270,7 +270,7 @@ router.post('/wineTask', auth, async (req, res) => {
    
         await subTask.save()      
       }
-    } else if (!simpleTaskTypes.includes(wineTask.type)) {
+    } else if (!wineTaskSimpleTypes.includes(wineTask.type)) {
       res.status(400).send({'error': 'Unknown task type'})
       return
     }
@@ -471,7 +471,7 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
       return
     }
 
-    if (simpleTaskTypes.includes(task.type)) {
+    if (wineTaskSimpleTypes.includes(task.type)) {
 
       await task.deleteOne({ _id })
       res.send(task)
