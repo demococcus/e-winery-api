@@ -3,10 +3,12 @@ const auth = require('../middleware/auth')
 const router = new express.Router()
 
 const Wine = require('../models/wine')
+const Grape = require('../models/grape')
 const Counter = require('../models/counter')
 const WineTask = require('../models/wineTask')
 const WineSubTask = require('../models/wineSubTask')
 const WineLab = require('../models/wineLab')
+const GrapeLab = require('../models/grapeLab')
 const Vessel = require('../models/vessel')
 const Additive = require('../models/additive')
 
@@ -344,6 +346,54 @@ router.post('/wineLab', auth, async (req, res) => {
 
 })
 
+// create grape lab
+router.post('/grapeLab', auth, async (req, res) => {
+
+  try {
+    const data = req.body
+
+    // verify if at leas one of these value is present and not null: sugars, pH, tAcids
+    if (!data.alcohol && !data.sugars && !data.pH && !data.tAcids ) {
+      res.status(400).send({error: 'At least one value must be present.'})
+      return
+    }
+
+     // find the grape
+     const grape = await Grape.findOne({ _id: data.grape})
+
+
+    const wineLab  = new GrapeLab({
+      ...data,
+      company: req.user.company._id,
+
+      type: 'lab',
+      date: data.date || new Date(),
+      user: req.user._id,
+      userName: req.user.name,
+      grapeParcel: grape.parcel,
+      grapeVariety: grape.variety, 
+
+    })
+
+
+
+    // save it
+    await wineLab.save()
+
+    //send it back
+    res.status(201).send(wineLab)
+
+  } catch(e) {
+    res.status(400).send(e)
+    console.log(e)
+  }
+
+  return 
+
+
+
+})
+
 // get wine labs
 router.get('/wineLabs', auth, async (req, res) =>{
 
@@ -418,7 +468,32 @@ router.get('/history/wine/:id', auth, async (req, res) =>{
   } 
 })
 
-// delete labEvent by id
+// get the labs and the tasks of a given grape
+router.get('/history/grape/:id', auth, async (req, res) =>{
+
+  const company = req.user.company._id
+  const searchCriteria = {company, grape: req.params.id} 
+
+
+  try {   
+    
+     // get the labs
+     const labResults = await GrapeLab
+     .find(searchCriteria)
+     .sort({ date: -1 }) // Sort by "date" in descending order
+     .limit(100) // Limit the results to 100
+     .lean()
+     .exec()
+    
+        
+    res.send([...labResults])
+  } catch(e) {    
+    res.status(500).send()
+    console.log(e)
+  } 
+})
+
+// delete wineLab by id
 router.delete('/wineLab/:id', auth, async (req, res) => {
   const _id = req.params.id
   const company = req.user.company._id
@@ -435,6 +510,29 @@ router.delete('/wineLab/:id', auth, async (req, res) => {
 
     await wineLab.deleteOne({ _id })
     res.send(wineLab)
+  } catch(e) {
+    res.status(500).send()
+    console.error(e)
+  }
+})
+
+// delete grapeLab by id
+router.delete('/grapeLab/:id', auth, async (req, res) => {
+  const _id = req.params.id
+  const company = req.user.company._id
+  const searchCriteria = {company, _id}
+
+  try {
+    const grapeLab = await GrapeLab.findOne(searchCriteria)
+
+    // If does not exist, return a 404 error
+    if (!grapeLab) {
+      res.status(404).send()
+      return
+    }
+
+    await grapeLab.deleteOne({ _id })
+    res.send(grapeLab)
   } catch(e) {
     res.status(500).send()
     console.error(e)

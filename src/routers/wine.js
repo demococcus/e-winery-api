@@ -97,14 +97,14 @@ router.patch('/wine/:id', auth, async (req, res) => {
 
 router.post('/wine', auth, async (req, res) => {
 
-  const vessel  = new Wine({
+  const wine  = new Wine({
       ...req.body,
       company: req.user.company._id
   })
 
   try {
-      await vessel.save()
-      res.status(201).send(vessel)
+      await wine.save()
+      res.status(201).send(wine)
   } catch(e) {
       res.status(400).send(e)
       console.log(e)
