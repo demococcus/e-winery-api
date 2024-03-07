@@ -7,6 +7,7 @@ const Grape = require('../models/grape')
 const Counter = require('../models/counter')
 const WineTask = require('../models/wineTask')
 const WineSubTask = require('../models/wineSubTask')
+const GrapeSubTask = require('../models/grapeSubTask')
 const WineLab = require('../models/wineLab')
 const GrapeLab = require('../models/grapeLab')
 const Vessel = require('../models/vessel')
@@ -32,6 +33,7 @@ router.get('/wineTasks', auth, async (req, res) =>{
     .sort({ date: -1 }) // Sort by "date" in descending order
     .limit(resultsNumber) // Limit the results
     .populate({path: 'subTasks'})
+    .populate({path: 'grapeSubTasks'})
     .lean()
     .exec()
         
@@ -228,6 +230,65 @@ router.post('/wineTask', auth, async (req, res) => {
 
 
         await subWine.save()      
+      }
+
+      // modify the quantity of the blend
+      wine.quantity += blendQuantity
+      
+      await wine.save()
+
+
+    } else if (data.type === 'vinification') {      
+
+      // wineTask.nextQuantity = data.nextQuantity
+      // change the quantity of the wine
+      // wine.quantity = data.nextQuantity
+      // await wine.save()
+
+      // create the subTasks
+
+      let blendQuantity = 0
+  
+      // do for each ingredient (subWine)
+      for (const dataSubGrape of data.subGrapes || []) {
+
+        // the quantity that is added to the blend
+        blendQuantity += dataSubGrape.quantity
+  
+        // create the subTask
+        const subTask = new GrapeSubTask()
+
+        subTask.type = "vinification"
+        subTask.wineTask = wineTask._id
+        subTask.seqNumber = wineTask.seqNumber
+        subTask.date = wineTask.date
+        subTask.user = wineTask.user
+        subTask.userName = wineTask.userName
+        subTask.company = req.user.company._id
+
+        subTask.refWine = wineTask.wine
+        subTask.refWineLot = wineTask.wineLot
+        subTask.refWineVintage = wineTask.wineVintage
+
+        subTask.refVessel = wineTask.vessel
+        subTask.refVesselLabel = wineTask.vesselLabel
+          
+        // find the subWine and its vessel
+        const subGrape = await Grape.findOne({ _id: dataSubGrape.id,  company: req.user.company._id})
+        if (!subGrape) {
+          res.status(404).send({"error": "subGrape not found"})
+          return
+        }
+  
+
+        subTask.grape = subGrape.id
+        subTask.grapeParcel = subGrape.parcel
+        subTask.grapeVariety = subGrape.variety      
+
+        subTask.quantity = dataSubGrape.quantity
+ 
+        await subTask.save()
+     
       }
 
       // modify the quantity of the blend
@@ -446,6 +507,7 @@ router.get('/history/wine/:id', auth, async (req, res) =>{
     .sort({ date: -1 }) // Sort by "date" in descending order
     .limit(100) // Limit the results to 100
     .populate({path: 'subTasks'})
+    .populate({path: 'grapeSubTasks'})
     .lean()
     .exec()
 
@@ -484,9 +546,17 @@ router.get('/history/grape/:id', auth, async (req, res) =>{
      .limit(100) // Limit the results to 100
      .lean()
      .exec()
+
+     // get the subTasks
+    const subTaskResults = await GrapeSubTask
+    .find(searchCriteria)
+    .sort({ date: -1 }) // Sort by "date" in descending order
+    .limit(100) // Limit the results to 100
+    .lean()
+    .exec()
     
         
-    res.send([...labResults])
+    res.send([...labResults, ...subTaskResults])
   } catch(e) {    
     res.status(500).send()
     console.log(e)
@@ -700,6 +770,31 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
     res.send(task)      
     return
 
+    
+    } else if (task.type === 'vinification') {
+
+    // find the sub tasks
+    const subTasks = await GrapeSubTask.find({wineTask: task._id, company: req.user.company._id})
+    if (!subTasks) {
+      res.status(404).send({'error': 'subTasks not found'})
+      return
+    }
+
+    
+    // delete the subtasks
+    await GrapeSubTask.deleteMany({ wineTask: task._id })        
+
+    // restore the quantity of the wine
+    wine.quantity = task.quantityBefore
+    await wine.save()
+
+    // delete the task
+    await task.deleteOne({ _id: task._id })
+
+    // send and exit
+    res.send(task)      
+    return
+
     } else {
       res.status(400).send({'error': 'Unknown task type'})
       return
@@ -711,7 +806,6 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
     console.error(e)
   }
 })
-
 
 const isLastTask = async (wine, taskNumber) => {
   const lastTask  = await WineTask.findOne({wine: wine._id}).sort({number: -1}).exec()

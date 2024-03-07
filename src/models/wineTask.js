@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 
 const wineTaskSimpleTypes = ["aerate", "decant", "drain-press", "filter", "freeze",  "remontage",]
-const wineTaskComplexTypes = ["transfer", "split-from", "blend", "additive",]
+const wineTaskComplexTypes = ["transfer", "split-from", "blend", "additive", "vinification"]
 const wineTaskTypes = [...wineTaskSimpleTypes, ...wineTaskComplexTypes]
 
 
@@ -103,9 +103,16 @@ const schema = new mongoose.Schema({
  
 })
 
-// wineTask - wineSubOp
+// wineTask - subTasks
 schema.virtual('subTasks', {
   ref: 'WineSubTask',
+  localField: '_id',
+  foreignField: 'wineTask'
+})
+
+// wineTask - grapeSubTasks
+schema.virtual('grapeSubTasks', {
+  ref: 'GrapeSubTask',
   localField: '_id',
   foreignField: 'wineTask'
 })
