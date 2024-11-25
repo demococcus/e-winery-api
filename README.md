@@ -1,4 +1,4 @@
-# AYA Winery backend
+# e-Winery backend
 
 Winery management portal.
 
