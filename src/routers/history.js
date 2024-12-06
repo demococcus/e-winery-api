@@ -609,6 +609,29 @@ router.delete('/grapeLab/:id', auth, async (req, res) => {
   }
 })
 
+// get wine task
+router.get('/wineTask/:id', auth, async (req, res) => {
+
+  const _id = req.params.id
+  const company = req.user.company._id
+  const searchCriteria = {company, _id}
+
+  try {
+    const wineTask = await WineTask
+    .findOne(searchCriteria)
+    .populate({path: 'subTasks'})
+    .populate({path: 'grapeSubTasks'})
+    .lean()
+    .exec()
+
+    res.send(wineTask)
+    
+  } catch(e) {
+    res.status(500).send()
+  } 
+
+})
+
 // delete wineTask by id
 router.delete('/wineTask/:id', auth, async (req, res) => {
   const _id = req.params.id
