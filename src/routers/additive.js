@@ -66,6 +66,39 @@ router.post('/additive', auth, async (req, res) => {
   }
 })
 
+// receive additive
+router.patch('/additive/receive/:id', auth, async (req, res) => {
+
+  const updates = Object.keys(req.body)
+  const allowedUpdates = ["quantity"]
+  const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
+
+  if (!isValidOperation) {
+    return res.status(400).send({ error: 'Invalid updates!' })
+  }
+
+  try {
+    const _id = req.params.id
+    const company = req.user.company._id
+    const searchCriteria = {company, _id}
+    const additive = await Additive.findOne(searchCriteria)
+  
+    if (!additive) {
+      return res.status(404).send()    
+    }
+    
+    additive['quantity'] += Number(req.body['quantity']);
+
+    await additive.save()
+    res.send(additive)
+
+  } catch (e) {
+    res.status(400).send(e)
+    console.log(e)
+  }
+
+})
+
 
 // Delete an additive by id
 router.delete('/additive/:id', auth, async (req, res) => {

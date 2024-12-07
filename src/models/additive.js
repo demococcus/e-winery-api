@@ -18,7 +18,7 @@ const additiveSchema = new mongoose.Schema({
         return value.length >= 3;
       },
       message: 'Label must have a length greater than 3.'
-  }
+    }
   },
 
   quantity: {
@@ -30,6 +30,18 @@ const additiveSchema = new mongoose.Schema({
         return value >= 0;
       },
       message: 'Quantity must be a positive number.'
+    }
+  },
+
+  accounting: {
+    type: String,
+    required: true,
+    default: '',
+    validate: {
+      validator: function(value) {
+        return value.length >= 3;
+      },
+      message: 'Accounting must have a length greater than 3.'
     }
   },
 
