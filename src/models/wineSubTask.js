@@ -93,6 +93,11 @@ const schema = new mongoose.Schema({
     required: false
   }, 
 
+  refWineAccounting: {
+    type: String,
+    required: false
+  }, 
+
   refVessel: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -116,6 +121,11 @@ const schema = new mongoose.Schema({
   }, 
 
   additiveUnit: {
+    type: String,
+    required: false
+  }, 
+
+  additiveAccounting: {
     type: String,
     required: false
   }, 

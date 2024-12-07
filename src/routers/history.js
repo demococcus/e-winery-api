@@ -316,6 +316,7 @@ router.post('/wineTask', auth, async (req, res) => {
         subTask.refWine = wineTask.wine
         subTask.refWineLot = wineTask.wineLot
         subTask.refWineVintage = wineTask.wineVintage
+        // subTask.refWineAccounting = wineTask.wineVintage
 
         subTask.refVessel = wineTask.vessel
         subTask.refVesselLabel = wineTask.vesselLabel
@@ -329,9 +330,16 @@ router.post('/wineTask', auth, async (req, res) => {
         subTask.additive = additive.id
         subTask.additiveLabel = additive.label
         subTask.additiveUnit = additive.unit
+        subTask.additiveAccounting = additive.accounting
         subTask.quantity = element.quantity
    
-        await subTask.save()      
+        await subTask.save()   
+        
+        // substract the quantity from the additive balance
+        additive.quantity -= element.quantity
+        await additive.save()
+
+
       }
     } else if (!wineTaskSimpleTypes.includes(wineTask.type)) {
       res.status(400).send({'error': 'Unknown task type'})
@@ -680,10 +688,32 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
       return
 
     } else if (task.type === 'additive') { 
-      
 
-      // delete the subTasks
-      await WineSubTask.deleteMany({wineTask: task._id, company: req.user.company._id})
+      // find the sub tasks
+      const subTasks = await WineSubTask.find({wineTask: task._id, company: req.user.company._id})
+      if (!subTasks) {
+        res.status(404).send({'error': 'subTasks not found'})
+        return
+      }
+
+      // iterate again to take actions
+      for (const subTask of subTasks) {
+
+        // find the additive
+        const additive = await Additive.findOne({ _id: subTask.additive, company: req.user.company._id})
+        if (!additive) {return res.status(404).send({'error': 'Additive not found'})}
+
+        // restore the quantity
+        additive.quantity += subTask.quantity
+        await additive.save()
+
+        // delete the subTasks
+        await WineSubTask.deleteOne({ _id: subTask._id })
+
+      }      
+
+      // // delete the subTasks
+      // await WineSubTask.deleteMany({wineTask: task._id, company: req.user.company._id})
 
       // delete the task
       await task.deleteOne({ _id: task._id })
