@@ -106,6 +106,7 @@ router.post('/wineTask', auth, async (req, res) => {
         status: wine.status,
         quantity: data.quantity,
         vessel: data.nextVessel,
+        accounting: wine.accounting,
       })
       await nextWine.save()
 

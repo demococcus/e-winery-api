@@ -31,7 +31,7 @@ const wineSchema = new mongoose.Schema({
 
     accounting: {
         type: String,
-        required: true,
+        required: false,
         minlength: 3,        
         trim: true,
         // unique: true, // should not be unique
