@@ -29,6 +29,14 @@ const wineSchema = new mongoose.Schema({
         // unique: true, // should not be unique
     },
 
+    accounting: {
+        type: String,
+        required: true,
+        minlength: 3,        
+        trim: true,
+        // unique: true, // should not be unique
+    },
+
     status: {
         type: String,
         default: ''

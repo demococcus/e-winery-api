@@ -73,7 +73,8 @@ router.post('/wineTask', auth, async (req, res) => {
     }
     wineTask.wineLot = wine.lot
     wineTask.wineVintage = wine.vintage
-    wineTask.quantityBefore = wine.quantity  
+    wineTask.quantityBefore = wine.quantity 
+    wineTask.wineAccounting = wine.accounting
 
     // find the current vessel
     const populateWineOptions = {path: 'vessel', select: 'label'}
@@ -316,7 +317,7 @@ router.post('/wineTask', auth, async (req, res) => {
         subTask.refWine = wineTask.wine
         subTask.refWineLot = wineTask.wineLot
         subTask.refWineVintage = wineTask.wineVintage
-        // subTask.refWineAccounting = wineTask.wineVintage
+        subTask.refWineAccounting = wineTask.wineAccounting
 
         subTask.refVessel = wineTask.vessel
         subTask.refVesselLabel = wineTask.vesselLabel

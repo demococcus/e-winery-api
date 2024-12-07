@@ -66,6 +66,11 @@ const schema = new mongoose.Schema({
   wineVintage: {
     type: Number,
     required: false
+  }, 
+
+  wineAccounting: {
+    type: String,
+    required: false
   },  
 
   vessel: {

@@ -69,7 +69,7 @@ router.get('/wine/:id', auth, async (req, res) => {
 router.patch('/wine/:id', auth, async (req, res) => {
 
   const updates = Object.keys(req.body)
-  const allowedUpdates = ['vintage', 'status', 'lot', 'vessel', "quantity", "archived"]
+  const allowedUpdates = ['vintage', 'status', 'lot', 'vessel', "quantity", "archived", "accounting"]
   const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
   
   if (!isValidOperation) {
