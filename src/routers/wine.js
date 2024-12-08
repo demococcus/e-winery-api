@@ -23,6 +23,7 @@ router.get('/wines', auth, async (req, res) => {
     .find(searchCriteria)
     .populate(populateVesselOptions)
     .populate(populateEventOptions)
+    .sort({ vintage: -1, lot: 1 })
     .lean()
     .exec()
 
