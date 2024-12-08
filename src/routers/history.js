@@ -527,7 +527,7 @@ router.get('/history/wine/:id', auth, async (req, res) =>{
     // get the tasks
     const taskResults = await WineTask
     .find(searchCriteria)
-    .sort({ date: -1 }) // Sort by "date" in descending order
+    .sort({ date: -1, seqNumber: -1 }) // Sort by "date" in descending order
     .limit(100) // Limit the results to 100
     .populate({path: 'subTasks'})
     .populate({path: 'grapeSubTasks'})
