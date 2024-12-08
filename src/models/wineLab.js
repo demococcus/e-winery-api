@@ -23,49 +23,24 @@ const schema = new mongoose.Schema({
     },
   },
 
-
-  date: {
-    type: Date,
-    required: false
-  },
-
-  note: {
-    type: String,
-    required: false
-  },
-
   user: {
     type: mongoose.Schema.Types.ObjectId,
     required: false,
     ref: 'User'
   },
 
-  userName: {
-    type: String,
-    required: false
-  },
-
-  vesselLabel: {
-    type: String,
-    required: false
-  },
-
   wine: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
+  type: mongoose.Schema.Types.ObjectId,
+  required: true,
     ref: 'Wine'
   },
 
-
-  wineLot: {
-    type: String,
-    required: false
-  },
-
-  wineVintage: {
-    type: String,
-    required: false
-  },
+  date: {type: Date, required: false},
+  note: {type: String, required: false},
+  userName: {type: String, required: false},
+  vesselLabel: {type: String, required: false},
+  wineLot: {type: String, required: false},
+  wineVintage: {type: String, required: false},
 
   alcohol: {type: Number, required: false},
   sugars: {type: Number, required: false},
@@ -73,9 +48,12 @@ const schema = new mongoose.Schema({
   pH: {type: Number, required: false},
   SO2: {type: Number, required: false},
   tSO2: {type: Number, required: false},
+  corrSO2: {type: Number, required: false},
   vAcids: {type: Number, required: false},
   density: {type: Number, required: false},
   mAcid: {type: Number, required: false},
+  hot: {type: String, required: false},
+  cold: {type: String, required: false},
    
 })
 
