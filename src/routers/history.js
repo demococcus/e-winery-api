@@ -377,7 +377,20 @@ router.post('/wineLab', auth, async (req, res) => {
     await wine.populate(populateWineOptions)
 
     // verify if at leas one of these value is present and not null: alcohol, sugars, SO2, tSO2, vAcids, pH, tAcids, density, mAcid
-    if (!data.alcohol && !data.sugars && !data.SO2 && !data.tSO2 && !data.vAcids && !data.pH && !data.tAcids && !data.density && !data.mAcid) {
+    if (
+        !data.alcohol 
+        && !data.sugars 
+        && !data.SO2 
+        && !data.tSO2 
+        && !data.corrSO2 
+        && !data.vAcids 
+        && !data.pH 
+        && !data.tAcids 
+        && !data.density 
+        && !data.mAcid 
+        && !data.hot 
+        && !data.cold 
+      ) {
       res.status(400).send({error: 'At least one value must be present.'})
       return
     }
