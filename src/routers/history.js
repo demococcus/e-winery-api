@@ -910,14 +910,13 @@ if (accounting) {
 }
 
 if (dateFrom && dateTo) {
+  const dateToPlusOne = new Date(dateTo);
+  dateToPlusOne.setDate(dateToPlusOne.getDate() + 1); // Add one day
+
   searchCriteria.date = {
     $gte: new Date(dateFrom),  // Greater than or equal to dateFrom
-    $lte: new Date(dateTo)     // Less than or equal to dateTo
+    $lte: new Date(dateToPlusOne)     // Less than or equal to dateTo
   };
-} else if (dateFrom) {
-  searchCriteria.date = { $gte: new Date(dateFrom) };  // Only filter on dateFrom
-} else if (dateTo) {
-  searchCriteria.date = { $lte: new Date(dateTo) };  // Only filter on dateTo
 }
 
 // console.log("searchCriteria", searchCriteria)

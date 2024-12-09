@@ -10,7 +10,11 @@ router.get('/wines', auth, async (req, res) => {
   try {
 
     const company = req.user.company._id
-    const searchCriteria = {company, archived: {$ne: true}} 
+    const searchCriteria = {
+      company, 
+      archived: {$ne: true},
+      status: {$ne: 'BT'},
+    } 
 
     // populate the tank field with the label of the tank
     const populateVesselOptions = {path: 'vessel', select: 'label capacity number type'}
@@ -35,6 +39,47 @@ router.get('/wines', auth, async (req, res) => {
         wine.lastLab = null
       }
     })    
+    
+    res.send(wines)
+  } catch(e) {
+    res.status(500).send()
+  }
+})
+
+router.get('/wines/bottled', auth, async (req, res) => {
+  try {
+
+    const { lot, dateFrom, dateTo } = req.query;  // Get query parameters
+
+    const company = req.user.company._id
+    const searchCriteria = {
+      company, 
+      archived: {$ne: true},
+      status: "BT",
+    } 
+
+    if (dateFrom && dateTo) {
+      const dateToPlusOne = new Date(dateTo);
+      dateToPlusOne.setDate(dateToPlusOne.getDate() + 1); // Add one day
+
+      searchCriteria.dateBottled = {
+        $gte: new Date(dateFrom),  // Greater than or equal to dateFrom
+        $lte: new Date(dateToPlusOne)     // Less than or equal to dateTo
+      };
+    }
+
+    if (lot && lot.length >= 3) {
+      searchCriteria.lot = { $regex: lot, $options: 'i' }; // Case-insensitive "like"
+    }
+
+    // console.log('searchCriteria', searchCriteria)
+    
+    const wines = await Wine.find()
+    .find(searchCriteria)
+    .sort({ lot: 1 })
+    .limit(100) // Limit the results
+    .lean()
+    .exec()  
     
     res.send(wines)
   } catch(e) {

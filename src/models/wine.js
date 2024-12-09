@@ -58,6 +58,11 @@ const wineSchema = new mongoose.Schema({
         default: false      
     },
 
+    dateBottled: {
+        type: Date,
+        required: false
+      },    
+
     
     // Link Wine - Vessel
     vessel: {
@@ -97,15 +102,27 @@ wineSchema.methods.toJSON = function () {
 // Runs before each save
 wineSchema.pre('save', async function (next) {
     const wine = this
+
+    // Wine is being bottled
+    if (wine.isModified('status') && wine.status === 'BT') {
+        // console.log('Wine is being bottled: removing it from the vessel and set dateBottled')
+        wine.vessel = null
+        wine.dateBottled = new Date()
+    } 
+    
+    else if (wine.isModified('status') && wine.status !== 'BT') {
+        // console.log('Wine is being un-bottled: remove dateBottled')
+        wine.dateBottled = null
+    }
     
     // Wine is being archived: removing it from the vessel
-    if (wine.isModified('archived') && wine.archived === true) {
-        wine.vessel = null
+    else if (wine.isModified('archived') && wine.archived === true) {
         // console.log('Wine is being archived: removing it from the vessel')
+        wine.vessel = null
     }
 
-    // Wine is being added to a vessel: removing the archived status
-    if (wine.isModified('vessel') && wine.vessel !== null) {
+    else if (wine.isModified('vessel') && wine.vessel !== null) {
+        // console.log('Wine is being added to a vessel: removing the archived status')
         wine.archived = false
     }                
     
