@@ -875,6 +875,53 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
   }
 })
 
+// get additives report
+router.get('/additive/report', auth, async (req, res) => {
+
+const { accounting, dateFrom, dateTo } = req.query;  // Get query parameters
+
+const searchCriteria = {
+  company: req.user.company._id,
+  type: "additive",
+}
+
+if (accounting) {
+  searchCriteria.$or = [
+    { refWineAccounting: accounting },
+    { additiveAccounting: accounting }
+  ];
+}
+
+if (dateFrom && dateTo) {
+  searchCriteria.date = {
+    $gte: new Date(dateFrom),  // Greater than or equal to dateFrom
+    $lte: new Date(dateTo)     // Less than or equal to dateTo
+  };
+} else if (dateFrom) {
+  searchCriteria.date = { $gte: new Date(dateFrom) };  // Only filter on dateFrom
+} else if (dateTo) {
+  searchCriteria.date = { $lte: new Date(dateTo) };  // Only filter on dateTo
+}
+
+// console.log("searchCriteria", searchCriteria)
+
+  try {
+
+    const results = await WineSubTask
+    .find(searchCriteria)
+    .sort({ date: -1 }) // Sort by "date" in descending order
+    .limit(3000) // Limit the results
+    .lean()
+    .exec()
+
+    res.send(results)
+    
+  } catch(e) {
+    res.status(500).send()
+  } 
+
+})
+
 const isLastTask = async (wine, taskNumber) => {
   const lastTask  = await WineTask.findOne({wine: wine._id}).sort({number: -1}).exec()
   const lastTaskNumber = lastTask ? lastTask.seqNumber : null
