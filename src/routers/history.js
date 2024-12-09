@@ -112,7 +112,10 @@ router.post('/wineTask', auth, async (req, res) => {
 
 
       // save the modifications in the current wine
-      wine.quantity -= data.quantity
+      const newQuantity = wine.quantity - data.quantity
+      wine.quantity = Math.round(newQuantity * 1000) / 1000
+      // wine.quantity -= data.quantity
+
       await wine.save()
 
       // create a subtask for the new wine
@@ -222,7 +225,9 @@ router.post('/wineTask', auth, async (req, res) => {
         await subTask.save()
   
         // modify the quantity of the source wine
-        subWine.quantity -= dataSubWine.quantity
+        const newQuantity = subWine.quantity - dataSubWine.quantity
+        subWine.quantity = Math.round(newQuantity * 1000) / 1000
+        // subWine.quantity -= dataSubWine.quantity
 
         // archive the wine if it has no quantity left
         if (subWine.quantity <= 0) {
@@ -235,7 +240,9 @@ router.post('/wineTask', auth, async (req, res) => {
       }
 
       // modify the quantity of the blend
-      wine.quantity += blendQuantity
+      const newQuantity = wine.quantity + blendQuantity
+      wine.quantity = Math.round(newQuantity * 1000) / 1000
+      // wine.quantity += blendQuantity
       
       await wine.save()
 
@@ -255,7 +262,9 @@ router.post('/wineTask', auth, async (req, res) => {
       for (const dataSubGrape of data.subGrapes || []) {
 
         // the quantity that is added to the blend
-        blendQuantity += dataSubGrape.quantity
+        const newQuantity = blendQuantity + dataSubGrape.quantity
+        blendQuantity = Math.round(newQuantity * 1000) / 1000
+        // blendQuantity += dataSubGrape.quantity
   
         // create the subTask
         const subTask = new GrapeSubTask()
@@ -294,7 +303,9 @@ router.post('/wineTask', auth, async (req, res) => {
       }
 
       // modify the quantity of the blend
-      wine.quantity += blendQuantity
+      const newQuantity = wine.quantity += blendQuantity
+      wine.quantity = Math.round(newQuantity * 1000) / 1000
+      // wine.quantity += blendQuantity
       
       await wine.save()
 
