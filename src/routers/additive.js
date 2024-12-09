@@ -86,8 +86,10 @@ router.patch('/additive/receive/:id', auth, async (req, res) => {
     if (!additive) {
       return res.status(404).send()    
     }
-    
-    additive['quantity'] += Number(req.body['quantity']);
+
+    const newQuantity = additive['quantity'] + req.body['quantity'];
+    additive['quantity'] = Math.round(newQuantity * 1000) / 1000
+    // additive['quantity'] += req.body['quantity']   
 
     await additive.save()
     res.send(additive)

@@ -338,7 +338,10 @@ router.post('/wineTask', auth, async (req, res) => {
         await subTask.save()   
         
         // substract the quantity from the additive balance
-        additive.quantity -= element.quantity
+        const newQuantity = additive.quantity - element.quantity
+        additive.quantity = Math.round(newQuantity * 1000) / 1000
+        // additive.quantity -= element.quantity
+
         await additive.save()
 
 
@@ -719,7 +722,10 @@ router.delete('/wineTask/:id', auth, async (req, res) => {
         if (!additive) {return res.status(404).send({'error': 'Additive not found'})}
 
         // restore the quantity
-        additive.quantity += subTask.quantity
+        const newQuantity = additive.quantity + subTask.quantity
+        additive.quantity = Math.round(newQuantity * 1000) / 1000
+        // additive.quantity += subTask.quantity
+
         await additive.save()
 
         // delete the subTasks
