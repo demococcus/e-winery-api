@@ -9,6 +9,7 @@ const WineTask = require('../models/wineTask')
 const WineSubTask = require('../models/wineSubTask')
 const GrapeSubTask = require('../models/grapeSubTask')
 const WineLab = require('../models/wineLab')
+const WineNote = require('../models/wineNote')
 const GrapeLab = require('../models/grapeLab')
 const Vessel = require('../models/vessel')
 const Additive = require('../models/additive')
@@ -444,6 +445,52 @@ router.post('/wineLab', auth, async (req, res) => {
 
 })
 
+// create wine note
+router.post('/wineNote', auth, async (req, res) => {
+
+  try {
+    const data = req.body
+
+    // find the wine and its vessel
+    const wine = await Wine.findOne({ _id: data.wine})
+    const populateWineOptions = {path: 'vessel', select: 'label'}
+    await wine.populate(populateWineOptions)
+
+
+    const wineNote  = new WineNote({
+      ...data,
+      company: req.user.company._id,
+
+      type: 'note',
+      date: data.date || new Date(),
+      user: req.user._id,
+      userName: req.user.name,
+      vesselLabel: wine.vessel.label,
+      wine: wine._id,
+      wineLot: wine.lot,  
+      wineVintage: wine.vintage,  
+
+    })
+
+
+
+    // save it
+    await wineNote.save()
+
+    //send it back
+    res.status(201).send(wineNote)
+
+  } catch(e) {
+    res.status(400).send(e)
+    console.log(e)
+  }
+
+  return 
+
+
+
+})
+
 // create grape lab
 router.post('/grapeLab', auth, async (req, res) => {
 
@@ -520,7 +567,7 @@ router.get('/wineLabs', auth, async (req, res) =>{
   } 
 })
 
-// get the labs and the tasks of a given wine
+// get the labs, the notes and the tasks of a given wine
 router.get('/history/wine/:id', auth, async (req, res) =>{
 
   const company = req.user.company._id
@@ -531,6 +578,14 @@ router.get('/history/wine/:id', auth, async (req, res) =>{
     
      // get the labs
      const labResults = await WineLab
+     .find(searchCriteria)
+     .sort({ date: -1 }) // Sort by "date" in descending order
+     .limit(100) // Limit the results to 100
+     .lean()
+     .exec()
+
+     // get the notes
+     const wineNotes = await WineNote
      .find(searchCriteria)
      .sort({ date: -1 }) // Sort by "date" in descending order
      .limit(100) // Limit the results to 100
@@ -560,7 +615,7 @@ router.get('/history/wine/:id', auth, async (req, res) =>{
 
 
         
-    res.send([...labResults, ...taskResults, ...subTaskResults])
+    res.send([...labResults, ...taskResults, ...subTaskResults, ...wineNotes])
   } catch(e) {    
     res.status(500).send()
     console.log(e)
@@ -617,6 +672,29 @@ router.delete('/wineLab/:id', auth, async (req, res) => {
 
     await wineLab.deleteOne({ _id })
     res.send(wineLab)
+  } catch(e) {
+    res.status(500).send()
+    console.error(e)
+  }
+})
+
+// delete wineNote by id
+router.delete('/wineNote/:id', auth, async (req, res) => {
+  const _id = req.params.id
+  const company = req.user.company._id
+  const searchCriteria = {company, _id}
+
+  try {
+    const wineNote = await WineNote.findOne(searchCriteria)
+
+    // If does not exist, return a 404 error
+    if (!wineNote) {
+      res.status(404).send()
+      return
+    }
+
+    await wineNote.deleteOne({ _id })
+    res.send(wineNote)
   } catch(e) {
     res.status(500).send()
     console.error(e)
