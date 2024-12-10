@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
+const AdditiveDelivery = require('./additiveDelivery')
 
 const additiveSchema = new mongoose.Schema({
 
@@ -55,6 +56,11 @@ const additiveSchema = new mongoose.Schema({
       message: 'Invalid unit.'
     }
   },
+
+  deliveries: {
+    type: [],
+    required: false
+  }
 
 })
 

@@ -1,6 +1,7 @@
 const express = require('express')
 const auth = require('../middleware/auth')
 const Additive = require('../models/additive')
+const AdditiveDelivery = require('../models/additiveDelivery')
 
 const router = new express.Router()
 
@@ -28,6 +29,7 @@ router.get('/additive/:id', auth, async (req, res) => {
   const _id = req.params.id  
   const company = req.user.company._id
   const searchCriteria = {company, _id}
+
   try {
     const additive = await Additive
     .findOne(searchCriteria)
@@ -36,6 +38,16 @@ router.get('/additive/:id', auth, async (req, res) => {
       res.status(404).send()
       return
     } 
+
+    // get the latest deliveries
+    const deliveries = await AdditiveDelivery
+    .find({refAdditive: _id})
+    .sort({date: -1})
+    .limit(10)
+    .lean()
+    .exec()
+
+    additive.deliveries = deliveries
 
     res.send(additive)
   } catch(e) {
@@ -70,7 +82,7 @@ router.post('/additive', auth, async (req, res) => {
 router.patch('/additive/receive/:id', auth, async (req, res) => {
 
   const updates = Object.keys(req.body)
-  const allowedUpdates = ["quantity"]
+  const allowedUpdates = ["quantity", "supplier"]
   const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
 
   if (!isValidOperation) {
@@ -82,13 +94,26 @@ router.patch('/additive/receive/:id', auth, async (req, res) => {
     const company = req.user.company._id
     const searchCriteria = {company, _id}
     const additive = await Additive.findOne(searchCriteria)
+
+    const data = req.body
   
     if (!additive) {
       return res.status(404).send()    
     }
 
-    const newQuantity = additive['quantity'] + req.body['quantity'];
-    additive['quantity'] = Math.round(newQuantity * 1000) / 1000
+    // create delivery
+    const delivery = new AdditiveDelivery({
+      company: req.user.company._id,
+      date: data.date || new Date(),
+      supplier: data.supplier,
+      quantity: data.quantity,
+      refAdditive: additive._id
+    })
+    await delivery.save()
+
+
+    const newQuantity = additive.quantity + data.quantity;
+    additive.quantity = Math.round(newQuantity * 1000) / 1000
     // additive['quantity'] += req.body['quantity']   
 
     await additive.save()
@@ -119,6 +144,49 @@ router.delete('/additive/:id', auth, async (req, res) => {
 
     await additive.deleteOne({ _id })
     res.send(additive)
+  } catch(e) {
+    res.status(500).send()
+    console.error(e)
+  }
+})
+
+// Delete additive delivery
+router.delete('/additive/undoReceive/:id', auth, async (req, res) => {
+  const _id = req.params.id
+  const company = req.user.company._id
+  const searchCriteria = {company, _id}
+
+  try {
+    const delivery = await AdditiveDelivery.findOne(searchCriteria)
+
+    // If the additive does not exist, return a 404 error
+    if (!delivery) {
+      res.status(404).send()
+      return
+    }
+
+    // get the additive and substract the quantity
+    const additive = await Additive.findOne({_id: delivery.refAdditive})
+    if (!additive) {
+      res.status(404).send()
+      return
+    }
+    console.log('additive.quantity b', additive.quantity)
+
+    const newQuantity = additive.quantity - delivery.quantity
+
+    console.log('newQuantity', newQuantity)
+    
+    additive.quantity = Math.round(newQuantity * 1000) / 1000
+    
+    console.log('additive.quantity a', additive.quantity)
+
+    await additive.save()    
+
+    // delete delivery
+    await delivery.deleteOne({ _id })
+
+    res.send(delivery)
   } catch(e) {
     res.status(500).send()
     console.error(e)
